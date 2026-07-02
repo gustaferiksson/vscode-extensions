@@ -2,7 +2,7 @@
     "name": "diff-files",
     "displayName": "Diff Files",
     "description": "Quickly diff the active file against any open, unsaved, or workspace file.",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "publisher": "gustaferiksson",
     "author": "Gustaf Eriksson",
     "license": "MIT",

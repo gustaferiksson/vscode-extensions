@@ -2,6 +2,10 @@
 
 All notable changes to the **Diff Files** extension are documented here.
 
+## [0.0.2]
+
+- Maintenance release: source consolidated into the `vscode-extensions` monorepo. No functional changes.
+
 ## [0.0.1]
 
 - Initial release.

@@ -2,6 +2,10 @@
 
 All notable changes to the "multi-repo-workspace-explorer" extension will be documented in this file.
 
+## [0.0.12]
+
+- Maintenance release: source consolidated into the `vscode-extensions` monorepo. No functional changes.
+
 ## [0.0.1] - 2026-01-11
 
 ### Added
