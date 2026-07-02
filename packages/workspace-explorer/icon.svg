@@ -1,0 +1,23 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+    <!-- Back folder (lighter blue) -->
+    <path d="M24 48 L24 98 L88 98 L88 48 L56 48 L50 42 L24 42 Z" fill="#569CD6" opacity="0.6" />
+
+    <!-- Front folder (main VS Code blue) -->
+    <path d="M40 32 L40 82 L104 82 L104 32 L72 32 L66 26 L40 26 Z" fill="#007ACC" />
+
+    <!-- Folder tab highlight -->
+    <path d="M40 26 L66 26 L72 32 L72 38 L40 38 Z" fill="#1C9CEF" opacity="0.4" />
+
+    <!-- Git branch icon -->
+    <g transform="translate(76, 54)">
+        <!-- Top circle -->
+        <circle cx="0" cy="0" r="5" fill="white" opacity="0.9" />
+
+        <!-- Branch line -->
+        <path d="M0 5 L0 16 Q0 20 4 20 L12 20" stroke="white" stroke-width="2.5" fill="none" opacity="0.9"
+            stroke-linecap="round" />
+
+        <!-- Bottom circle -->
+        <circle cx="12" cy="20" r="5" fill="white" opacity="0.9" />
+    </g>
+</svg>

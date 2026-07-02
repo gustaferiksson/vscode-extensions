@@ -1,0 +1,110 @@
+{
+    "name": "branch-pr-viewer",
+    "displayName": "Branch PR Viewer",
+    "description": "Browse local branches newest-first and review their changed files like a GitHub PR — native diff, no remote required.",
+    "version": "0.0.1",
+    "publisher": "gustaferiksson",
+    "author": "Gustaf Eriksson",
+    "license": "MIT",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/gustaferiksson/branch-pr-viewer"
+    },
+    "engines": {
+        "vscode": "^1.89.0"
+    },
+    "categories": [
+        "SCM Providers",
+        "Other"
+    ],
+    "keywords": [
+        "git",
+        "branch",
+        "diff",
+        "pull request",
+        "compare"
+    ],
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "branchPrViewer",
+                    "title": "Branch PR Viewer",
+                    "icon": "media/branch.svg"
+                }
+            ]
+        },
+        "views": {
+            "branchPrViewer": [
+                {
+                    "id": "branchPrViewer.branches",
+                    "name": "Branches",
+                    "contextualTitle": "Branch PR Viewer"
+                }
+            ]
+        },
+        "viewsWelcome": [
+            {
+                "view": "branchPrViewer.branches",
+                "contents": "No Git repository was found in this workspace.\nOpen a folder that is under version control to browse its branches."
+            }
+        ],
+        "commands": [
+            {
+                "command": "branchPrViewer.refresh",
+                "title": "Refresh",
+                "category": "Branch PR Viewer",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "branchPrViewer.selectBase",
+                "title": "Select Base Branch…",
+                "category": "Branch PR Viewer",
+                "icon": "$(git-compare)"
+            },
+            {
+                "command": "branchPrViewer.openDiff",
+                "title": "Open Diff",
+                "category": "Branch PR Viewer"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "branchPrViewer.selectBase",
+                    "when": "view == branchPrViewer.branches",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "branchPrViewer.refresh",
+                    "when": "view == branchPrViewer.branches",
+                    "group": "navigation@2"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "branchPrViewer.openDiff",
+                    "when": "false"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "Branch PR Viewer",
+            "properties": {
+                "branchPrViewer.baseBranch": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "Branch to compare against, using three-dot (merge-base) diff like a GitHub PR. When empty, the base is detected automatically: `main`, then `master`."
+                }
+            }
+        }
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "package": "vsce package --no-dependencies"
+    }
+}

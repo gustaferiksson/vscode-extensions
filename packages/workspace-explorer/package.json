@@ -1,0 +1,527 @@
+{
+    "name": "multi-repo-workspace-explorer",
+    "displayName": "Multi-Repo Workspace Explorer",
+    "description": "Manage git repositories in your workspace with a powerful repository browser",
+    "version": "0.0.11",
+    "publisher": "gustaferiksson",
+    "author": "Gustaf Eriksson",
+    "license": "MIT",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/gustaferiksson/workspace-explorer"
+    },
+    "engines": {
+        "vscode": "^1.89.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "keywords": [
+        "git",
+        "workspace",
+        "repository",
+        "multi-root",
+        "explorer"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "configuration": {
+            "title": "Multi-Repo Workspace Explorer",
+            "properties": {
+                "multiRepoWorkspaceExplorer.repoPaths": {
+                    "type": "array",
+                    "default": [],
+                    "description": "Base paths to scan for git repositories (e.g., ~/Repos)",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "multiRepoWorkspaceExplorer.useNativeWindowTabs": {
+                    "type": "boolean",
+                    "default": false,
+                    "markdownDescription": "Open repos in a new native window tab instead of a separate window (macOS only). Requires **View > Appearance > Show Tab Bar** to be enabled in VS Code.\n\n> **⚠️ NOTE:** This feature uses **AppleScript (`osascript`)** to click the *Window > New Tab* menu item. This executes a shell script as part of normal extension operation and may be **blocked by MDM profiles, corporate security policies, or macOS privacy settings**. Only enable this if you understand and accept that behaviour."
+                }
+            }
+        },
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "multi-repo-workspace-explorer",
+                    "title": "Multi-Repo Workspace Explorer",
+                    "icon": "$(folder-library)"
+                }
+            ]
+        },
+        "views": {
+            "multi-repo-workspace-explorer": [
+                {
+                    "id": "activeWorkspace",
+                    "name": "Active Workspace",
+                    "icon": "$(files)"
+                },
+                {
+                    "id": "repoBrowser",
+                    "name": "Repository Browser",
+                    "icon": "$(repo)"
+                },
+                {
+                    "id": "favoriteRepos",
+                    "name": "Favorites",
+                    "icon": "$(star-full)"
+                }
+            ],
+            "explorer": [
+                {
+                    "id": "multiRepoExplorer0",
+                    "name": "Workspace Folder",
+                    "icon": "$(repo)",
+                    "when": "multiRepoWorkspaceExplorer.view0.hasFolder"
+                },
+                {
+                    "id": "multiRepoExplorer1",
+                    "name": "Workspace Folder",
+                    "icon": "$(repo)",
+                    "when": "multiRepoWorkspaceExplorer.view1.hasFolder"
+                },
+                {
+                    "id": "multiRepoExplorer2",
+                    "name": "Workspace Folder",
+                    "icon": "$(repo)",
+                    "when": "multiRepoWorkspaceExplorer.view2.hasFolder"
+                },
+                {
+                    "id": "multiRepoExplorer3",
+                    "name": "Workspace Folder",
+                    "icon": "$(repo)",
+                    "when": "multiRepoWorkspaceExplorer.view3.hasFolder"
+                },
+                {
+                    "id": "multiRepoExplorer4",
+                    "name": "Workspace Folder",
+                    "icon": "$(repo)",
+                    "when": "multiRepoWorkspaceExplorer.view4.hasFolder"
+                },
+                {
+                    "id": "multiRepoExplorer5",
+                    "name": "Workspace Folder",
+                    "icon": "$(repo)",
+                    "when": "multiRepoWorkspaceExplorer.view5.hasFolder"
+                },
+                {
+                    "id": "multiRepoExplorer6",
+                    "name": "Workspace Folder",
+                    "icon": "$(repo)",
+                    "when": "multiRepoWorkspaceExplorer.view6.hasFolder"
+                },
+                {
+                    "id": "multiRepoExplorer7",
+                    "name": "Workspace Folder",
+                    "icon": "$(repo)",
+                    "when": "multiRepoWorkspaceExplorer.view7.hasFolder"
+                },
+                {
+                    "id": "multiRepoExplorer8",
+                    "name": "Workspace Folder",
+                    "icon": "$(repo)",
+                    "when": "multiRepoWorkspaceExplorer.view8.hasFolder"
+                },
+                {
+                    "id": "multiRepoExplorer9",
+                    "name": "Workspace Folder",
+                    "icon": "$(repo)",
+                    "when": "multiRepoWorkspaceExplorer.view9.hasFolder"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "multiRepoWorkspaceExplorer.addToWorkspace",
+                "title": "Add to Workspace",
+                "icon": "$(add)"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.removeFromWorkspace",
+                "title": "Remove from Workspace",
+                "icon": "$(remove)"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.refreshActiveWorkspace",
+                "title": "Refresh Active Workspace",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.replaceWorkspace",
+                "title": "Replace Workspace",
+                "icon": "$(window)"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.openInNewWindow",
+                "title": "Open in New Window",
+                "icon": "$(link-external)"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.refreshRepos",
+                "title": "Refresh Repositories",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.addToFavorites",
+                "title": "Add to Favorites...",
+                "icon": "$(star-empty)"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.addToFavoritesInGroup",
+                "title": "Add to Favorites in Group..."
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.removeFromFavorites",
+                "title": "Remove from Favorites",
+                "icon": "$(star-full)"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.createGroup",
+                "title": "New Group",
+                "icon": "$(new-folder)"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.deleteGroup",
+                "title": "Delete Group"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.renameGroup",
+                "title": "Rename Group"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.moveToGroup",
+                "title": "Move to Group"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.openAllInGroup",
+                "title": "Open All in New Workspace",
+                "icon": "$(link-external)"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.replaceWorkspaceWithGroup",
+                "title": "Replace Current Workspace",
+                "icon": "$(window)"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.refreshFavorites",
+                "title": "Refresh Favorites",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.cleanupFavorites",
+                "title": "Clean Up Invalid Entries"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.newFile",
+                "title": "New File"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.newFolder",
+                "title": "New Folder"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.openToSide",
+                "title": "Open to the Side"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.renameFile",
+                "title": "Rename"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.deleteFile",
+                "title": "Delete"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.cut",
+                "title": "Cut"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.copy",
+                "title": "Copy"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.paste",
+                "title": "Paste"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.copyPath",
+                "title": "Copy Path"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.copyRelativePath",
+                "title": "Copy Relative Path"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.revealInFinder",
+                "title": "Reveal in Finder"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.findInFolder",
+                "title": "Find in Folder..."
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.compareWithSelected",
+                "title": "Select for Compare"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.compareSelected",
+                "title": "Compare with Selected"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "multiRepoWorkspaceExplorer.refreshRepos",
+                    "when": "view == repoBrowser",
+                    "group": "navigation"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.refreshActiveWorkspace",
+                    "when": "view == activeWorkspace",
+                    "group": "navigation"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.refreshFavorites",
+                    "when": "view == favoriteRepos",
+                    "group": "navigation"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.createGroup",
+                    "when": "view == favoriteRepos",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "multiRepoWorkspaceExplorer.removeFromWorkspace",
+                    "when": "view == activeWorkspace && viewItem == activeWorkspaceRepo",
+                    "group": "inline"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.replaceWorkspace",
+                    "when": "view == activeWorkspace && viewItem == activeWorkspaceRepo && !multiRepoWorkspaceExplorer.isMultiFolderWorkspace",
+                    "group": "navigation"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.openInNewWindow",
+                    "when": "view == activeWorkspace && viewItem == activeWorkspaceRepo",
+                    "group": "navigation"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.addToWorkspace",
+                    "when": "view == repoBrowser && viewItem == gitRepo",
+                    "group": "inline"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.replaceWorkspace",
+                    "when": "view == repoBrowser && viewItem =~ /Repo/ && !multiRepoWorkspaceExplorer.isMultiFolderWorkspace",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.addToFavorites",
+                    "when": "view == repoBrowser && viewItem =~ /Repo/",
+                    "group": "favorites"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.openInNewWindow",
+                    "when": "view == repoBrowser && viewItem =~ /Repo/",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.removeFromWorkspace",
+                    "when": "view == repoBrowser && viewItem == activeRepo",
+                    "group": "inline"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.openInNewWindow",
+                    "when": "view == repoBrowser && viewItem =~ /Repo/",
+                    "group": "navigation"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.addToWorkspace",
+                    "when": "view == favoriteRepos && viewItem == favoriteRepo",
+                    "group": "inline"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.replaceWorkspace",
+                    "when": "view == favoriteRepos && viewItem == favoriteRepo && !multiRepoWorkspaceExplorer.isMultiFolderWorkspace",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.openInNewWindow",
+                    "when": "view == favoriteRepos && viewItem == favoriteRepo",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.openAllInGroup",
+                    "when": "view == favoriteRepos && viewItem == group",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.replaceWorkspaceWithGroup",
+                    "when": "view == favoriteRepos && viewItem == group",
+                    "group": "inline"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.removeFromFavorites",
+                    "when": "view == favoriteRepos && viewItem == favoriteRepo",
+                    "group": "favorites"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.moveToGroup",
+                    "when": "view == favoriteRepos && viewItem == favoriteRepo",
+                    "group": "favorites"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.renameGroup",
+                    "when": "view == favoriteRepos && viewItem == group",
+                    "group": "groupActions"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.deleteGroup",
+                    "when": "view == favoriteRepos && viewItem == group",
+                    "group": "groupActions"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.openInNewWindow",
+                    "when": "view == favoriteRepos && viewItem == favoriteRepo",
+                    "group": "navigation"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.newFile",
+                    "when": "view =~ /^multiRepoExplorer/",
+                    "group": "1_creation"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.newFolder",
+                    "when": "view =~ /^multiRepoExplorer/",
+                    "group": "1_creation"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.openToSide",
+                    "when": "view =~ /^multiRepoExplorer/ && viewItem == file",
+                    "group": "navigation"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.cut",
+                    "when": "view =~ /^multiRepoExplorer/ && viewItem =~ /^(file|folder)$/",
+                    "group": "5_cutcopypaste"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.copy",
+                    "when": "view =~ /^multiRepoExplorer/ && viewItem =~ /^(file|folder)$/",
+                    "group": "5_cutcopypaste"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.paste",
+                    "when": "view =~ /^multiRepoExplorer/ && viewItem == folder",
+                    "group": "5_cutcopypaste"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.copyPath",
+                    "when": "view =~ /^multiRepoExplorer/ && viewItem =~ /^(file|folder)$/",
+                    "group": "6_copypath"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.copyRelativePath",
+                    "when": "view =~ /^multiRepoExplorer/ && viewItem =~ /^(file|folder)$/",
+                    "group": "6_copypath"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.renameFile",
+                    "when": "view =~ /^multiRepoExplorer/ && viewItem =~ /^(file|folder)$/",
+                    "group": "7_modification"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.deleteFile",
+                    "when": "view =~ /^multiRepoExplorer/ && viewItem =~ /^(file|folder)$/",
+                    "group": "7_modification"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.revealInFinder",
+                    "when": "view =~ /^multiRepoExplorer/ && viewItem =~ /^(file|folder)$/",
+                    "group": "8_reveal"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.findInFolder",
+                    "when": "view =~ /^multiRepoExplorer/ && viewItem == folder",
+                    "group": "4_search"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.compareWithSelected",
+                    "when": "view =~ /^multiRepoExplorer/ && viewItem == file",
+                    "group": "3_compare"
+                },
+                {
+                    "command": "multiRepoWorkspaceExplorer.compareSelected",
+                    "when": "view =~ /^multiRepoExplorer/ && viewItem == file",
+                    "group": "3_compare"
+                }
+            ]
+        },
+        "keybindings": [
+            {
+                "command": "multiRepoWorkspaceExplorer.renameFile",
+                "key": "f2",
+                "when": "listFocus && focusedView =~ /^multiRepoExplorer/ && !inputFocus"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.deleteFile",
+                "key": "delete",
+                "when": "listFocus && focusedView =~ /^multiRepoExplorer/ && !inputFocus && isWindows"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.deleteFile",
+                "key": "delete",
+                "when": "listFocus && focusedView =~ /^multiRepoExplorer/ && !inputFocus && isLinux"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.deleteFile",
+                "key": "cmd+backspace",
+                "when": "listFocus && focusedView =~ /^multiRepoExplorer/ && !inputFocus && isMac"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.copy",
+                "key": "ctrl+c",
+                "when": "listFocus && focusedView =~ /^multiRepoExplorer/ && !inputFocus && !isMac"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.copy",
+                "key": "cmd+c",
+                "when": "listFocus && focusedView =~ /^multiRepoExplorer/ && !inputFocus && isMac"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.cut",
+                "key": "ctrl+x",
+                "when": "listFocus && focusedView =~ /^multiRepoExplorer/ && !inputFocus && !isMac"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.cut",
+                "key": "cmd+x",
+                "when": "listFocus && focusedView =~ /^multiRepoExplorer/ && !inputFocus && isMac"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.paste",
+                "key": "ctrl+v",
+                "when": "listFocus && focusedView =~ /^multiRepoExplorer/ && !inputFocus && !isMac"
+            },
+            {
+                "command": "multiRepoWorkspaceExplorer.paste",
+                "key": "cmd+v",
+                "when": "listFocus && focusedView =~ /^multiRepoExplorer/ && !inputFocus && isMac"
+            }
+        ]
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "package": "vsce package --no-dependencies"
+    }
+}

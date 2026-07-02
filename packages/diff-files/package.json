@@ -1,0 +1,72 @@
+{
+    "name": "diff-files",
+    "displayName": "Diff Files",
+    "description": "Quickly diff the active file against any open, unsaved, or workspace file.",
+    "version": "0.0.1",
+    "publisher": "gustaferiksson",
+    "author": "Gustaf Eriksson",
+    "license": "MIT",
+    "icon": "icon.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/gustaferiksson/diff-files"
+    },
+    "engines": {
+        "vscode": "^1.89.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "keywords": [
+        "diff",
+        "compare",
+        "file",
+        "difference",
+        "merge"
+    ],
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "diff.file",
+                "title": "Diff: File"
+            }
+        ],
+        "configuration": {
+            "title": "Diff Files",
+            "properties": {
+                "diff.showOpenFiles": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show currently open files in the picker."
+                },
+                "diff.showUntitledFiles": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show open untitled (never-saved) files in the picker."
+                },
+                "diff.showFoundFiles": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show files found in the workspace in the picker."
+                },
+                "diff.include": {
+                    "type": "string",
+                    "default": "**/*",
+                    "description": "Glob pattern controlling which workspace files appear in the picker."
+                },
+                "diff.exclude": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "Glob pattern for workspace files to exclude. When empty, VS Code's default `files.exclude` and `search.exclude` settings are used."
+                }
+            }
+        }
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "package": "vsce package --no-dependencies"
+    }
+}

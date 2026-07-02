@@ -1,0 +1,15 @@
+.vscode/**
+.vscode-test/**
+src/**
+.gitignore
+.git/**
+.github/**
+.editorconfig
+.nvmrc
+biome.json
+tsconfig.json
+media/icon.svg
+PUBLISHING.md
+**/*.map
+**/*.ts
+!out/**/*.js
