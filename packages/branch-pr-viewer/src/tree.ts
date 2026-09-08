@@ -12,14 +12,14 @@ import {
 } from './git';
 import { buildContentUri, buildFolderUri } from './providers';
 
-type RepoNode = { readonly kind: 'repo'; readonly root: string; readonly label: string };
+export type RepoNode = { readonly kind: 'repo'; readonly root: string; readonly label: string };
 type BranchNode = {
     readonly kind: 'branch';
     readonly root: string;
     readonly branch: BranchInfo;
     readonly base: string | null;
 };
-type DirNode = {
+export type DirNode = {
     readonly kind: 'dir';
     /** Display segment(s) — collapsed chains such as `src/analytics-agent`. */
     readonly name: string;
@@ -27,27 +27,29 @@ type DirNode = {
     readonly path: string;
     readonly root: string;
     readonly branchName: string;
-    readonly children: TreeNode[];
+    readonly children: ReadonlyArray<DirNode | FileNode>;
 };
-type FileNode = {
+export type FileNode = {
     readonly kind: 'file';
     readonly root: string;
     readonly base: string;
     readonly branchName: string;
-    readonly branchTip: string;
     readonly mergeBaseRef: string;
+    readonly right: RightSide;
     readonly file: ChangedFile;
 };
-type MessageNode = { readonly kind: 'message'; readonly text: string; readonly parentId: string };
+
+export type RightSide = { readonly kind: 'ref'; readonly ref: string } | { readonly kind: 'worktree' };
+export type MessageNode = { readonly kind: 'message'; readonly text: string; readonly parentId: string };
 
 export type TreeNode = RepoNode | BranchNode | DirNode | FileNode | MessageNode;
 
-type BuildContext = {
+export type BuildContext = {
     readonly root: string;
     readonly base: string;
     readonly branchName: string;
-    readonly branchTip: string;
     readonly mergeBaseRef: string;
+    readonly right: RightSide;
 };
 
 type Trie = { readonly dirs: Map<string, Trie>; readonly files: ChangedFile[] };
@@ -58,14 +60,14 @@ function makeFileNode(file: ChangedFile, ctx: BuildContext): FileNode {
         root: ctx.root,
         base: ctx.base,
         branchName: ctx.branchName,
-        branchTip: ctx.branchTip,
         mergeBaseRef: ctx.mergeBaseRef,
+        right: ctx.right,
         file,
     };
 }
 
 /** Groups changed files into a folder tree (folders first, then files, alphabetical). */
-function buildFileTree(files: readonly ChangedFile[], ctx: BuildContext): TreeNode[] {
+export function buildFileTree(files: readonly ChangedFile[], ctx: BuildContext): Array<DirNode | FileNode> {
     const root: Trie = { dirs: new Map(), files: [] };
     for (const file of files) {
         const segments = file.path.split('/');
@@ -86,7 +88,7 @@ function buildFileTree(files: readonly ChangedFile[], ctx: BuildContext): TreeNo
     return trieToNodes(root, '', ctx);
 }
 
-function trieToNodes(trie: Trie, dirPath: string, ctx: BuildContext): TreeNode[] {
+function trieToNodes(trie: Trie, dirPath: string, ctx: BuildContext): Array<DirNode | FileNode> {
     const dirNodes: DirNode[] = [];
     for (const [segment, sub] of trie.dirs) {
         let name = segment;
@@ -129,7 +131,7 @@ function branchKey(root: string, name: string): string {
     return `${root}\0${name}`;
 }
 
-function messageNode(parentId: string, text: string): MessageNode {
+export function messageNode(parentId: string, text: string): MessageNode {
     return { kind: 'message', text, parentId };
 }
 
@@ -195,14 +197,6 @@ export class BranchTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     }
 
     getTreeItem(node: TreeNode): vscode.TreeItem {
-        if (node.kind === 'repo') {
-            const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.Expanded);
-            item.id = `repo:${node.root}`;
-            item.iconPath = new vscode.ThemeIcon('repo');
-            item.contextValue = 'repo';
-            return item;
-        }
-
         if (node.kind === 'branch') {
             const item = new vscode.TreeItem(node.branch.name, vscode.TreeItemCollapsibleState.Collapsed);
             item.id = `branch:${node.root}:${node.branch.name}`;
@@ -213,24 +207,7 @@ export class BranchTreeProvider implements vscode.TreeDataProvider<TreeNode> {
             return item;
         }
 
-        if (node.kind === 'dir') {
-            const item = new vscode.TreeItem(node.name, vscode.TreeItemCollapsibleState.Expanded);
-            item.id = `dir:${node.root}:${node.branchName}:${node.path}`;
-            // resourceUri (no iconPath) → the icon theme paints the folder icon, per-name.
-            item.resourceUri = buildFolderUri(node.root, node.path);
-            item.contextValue = 'dir';
-            return item;
-        }
-
-        if (node.kind === 'file') {
-            return this.fileTreeItem(node);
-        }
-
-        const item = new vscode.TreeItem(node.text, vscode.TreeItemCollapsibleState.None);
-        item.id = `msg:${node.parentId}:${node.text}`;
-        item.iconPath = new vscode.ThemeIcon('info');
-        item.contextValue = 'message';
-        return item;
+        return nodeTreeItem(node);
     }
 
     getChildren(node?: TreeNode): vscode.ProviderResult<TreeNode[]> {
@@ -242,7 +219,7 @@ export class BranchTreeProvider implements vscode.TreeDataProvider<TreeNode> {
         }
         if (node.kind === 'repo') return this.branchNodes(node.root);
         if (node.kind === 'branch') return this.fileNodes(node);
-        if (node.kind === 'dir') return node.children;
+        if (node.kind === 'dir') return [...node.children];
         return [];
     }
 
@@ -253,20 +230,6 @@ export class BranchTreeProvider implements vscode.TreeDataProvider<TreeNode> {
             return `${age}  +${stat.additions} -${stat.deletions}`;
         }
         return age;
-    }
-
-    private fileTreeItem(node: FileNode): vscode.TreeItem {
-        const displayPath = node.file.path;
-        const rightUri = buildContentUri(node.root, node.branchTip, displayPath, node.file.status);
-
-        const item = new vscode.TreeItem(rightUri, vscode.TreeItemCollapsibleState.None);
-        item.id = `file:${node.root}:${node.branchName}:${displayPath}`;
-        item.tooltip = node.file.oldPath
-            ? `${node.file.oldPath} → ${displayPath} (${STATUS_LABEL[node.file.status]})`
-            : `${displayPath} (${STATUS_LABEL[node.file.status]})`;
-        item.contextValue = 'file';
-        item.command = { command: 'branchPrViewer.openDiff', title: 'Open Diff', arguments: [node] };
-        return item;
     }
 
     private async branchNodes(root: string): Promise<TreeNode[]> {
@@ -341,8 +304,8 @@ export class BranchTreeProvider implements vscode.TreeDataProvider<TreeNode> {
             root: node.root,
             base,
             branchName: node.branch.name,
-            branchTip: node.branch.tip,
             mergeBaseRef,
+            right: { kind: 'ref', ref: node.branch.tip },
         });
     }
 
@@ -351,15 +314,66 @@ export class BranchTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     }
 }
 
-/** Opens the native diff editor for a file node: base on the left, branch on the right. */
+export const EMPTY_TREE = '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
+
+function rightUri(node: FileNode): vscode.Uri {
+    if (node.right.kind === 'ref') {
+        return buildContentUri(node.root, node.right.ref, node.file.path, node.file.status);
+    }
+    if (node.file.status === 'D') {
+        return buildContentUri(node.root, EMPTY_TREE, node.file.path, node.file.status);
+    }
+    return vscode.Uri.file(path.join(node.root, node.file.path));
+}
+
+function fileTreeItem(node: FileNode): vscode.TreeItem {
+    const displayPath = node.file.path;
+    const item = new vscode.TreeItem(
+        buildContentUri(node.root, node.mergeBaseRef, displayPath, node.file.status),
+        vscode.TreeItemCollapsibleState.None
+    );
+    item.id = `file:${node.root}:${node.branchName}:${node.right.kind}:${displayPath}`;
+    item.tooltip = node.file.oldPath
+        ? `${node.file.oldPath} → ${displayPath} (${STATUS_LABEL[node.file.status]})`
+        : `${displayPath} (${STATUS_LABEL[node.file.status]})`;
+    item.contextValue = 'file';
+    item.command = { command: 'branchPrViewer.openDiff', title: 'Open Diff', arguments: [node] };
+    return item;
+}
+
+export function nodeTreeItem(node: RepoNode | DirNode | FileNode | MessageNode): vscode.TreeItem {
+    if (node.kind === 'repo') {
+        const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.Expanded);
+        item.id = `repo:${node.root}`;
+        item.iconPath = new vscode.ThemeIcon('repo');
+        item.contextValue = 'repo';
+        return item;
+    }
+
+    if (node.kind === 'dir') {
+        const item = new vscode.TreeItem(node.name, vscode.TreeItemCollapsibleState.Expanded);
+        item.id = `dir:${node.root}:${node.branchName}:${node.path}`;
+        item.resourceUri = buildFolderUri(node.root, node.path);
+        item.contextValue = 'dir';
+        return item;
+    }
+
+    if (node.kind === 'file') return fileTreeItem(node);
+
+    const item = new vscode.TreeItem(node.text, vscode.TreeItemCollapsibleState.None);
+    item.id = `msg:${node.parentId}:${node.text}`;
+    item.iconPath = new vscode.ThemeIcon('info');
+    item.contextValue = 'message';
+    return item;
+}
+
 export async function openFileDiff(node?: TreeNode): Promise<void> {
     if (node?.kind !== 'file') return;
 
     const displayPath = node.file.path;
-    const oldPath = node.file.oldPath ?? displayPath;
-    const left = buildContentUri(node.root, node.mergeBaseRef, oldPath);
-    const right = buildContentUri(node.root, node.branchTip, displayPath, node.file.status);
-    const title = `${path.basename(displayPath)} (${node.base} ↔ ${node.branchName})`;
+    const left = buildContentUri(node.root, node.mergeBaseRef, node.file.oldPath ?? displayPath);
+    const rightLabel = node.right.kind === 'worktree' ? 'working tree' : node.branchName;
+    const title = `${path.basename(displayPath)} (${node.base} ↔ ${rightLabel})`;
 
-    await vscode.commands.executeCommand('vscode.diff', left, right, title);
+    await vscode.commands.executeCommand('vscode.diff', left, rightUri(node), title);
 }

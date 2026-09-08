@@ -2,7 +2,7 @@
     "name": "branch-pr-viewer",
     "displayName": "Branch PR Viewer",
     "description": "Browse local branches newest-first and review their changed files like a GitHub PR — native diff, no remote required.",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "publisher": "gustaferiksson",
     "author": "Gustaf Eriksson",
     "license": "MIT",
@@ -35,6 +35,11 @@
                     "id": "branchPrViewer",
                     "title": "Branch PR Viewer",
                     "icon": "media/branch.svg"
+                },
+                {
+                    "id": "branchPrViewerCurrent",
+                    "title": "Current Branch Changes",
+                    "icon": "media/pull-request.svg"
                 }
             ]
         },
@@ -45,12 +50,23 @@
                     "name": "Branches",
                     "contextualTitle": "Branch PR Viewer"
                 }
+            ],
+            "branchPrViewerCurrent": [
+                {
+                    "id": "branchPrViewer.currentChanges",
+                    "name": "Changes",
+                    "contextualTitle": "Current Branch Changes"
+                }
             ]
         },
         "viewsWelcome": [
             {
                 "view": "branchPrViewer.branches",
                 "contents": "No Git repository was found in this workspace.\nOpen a folder that is under version control to browse its branches."
+            },
+            {
+                "view": "branchPrViewer.currentChanges",
+                "contents": "No Git repository was found in this workspace.\nOpen a folder that is under version control to review the current branch's changes."
             }
         ],
         "commands": [
@@ -70,6 +86,12 @@
                 "command": "branchPrViewer.openDiff",
                 "title": "Open Diff",
                 "category": "Branch PR Viewer"
+            },
+            {
+                "command": "branchPrViewer.toggleDiffStyle",
+                "title": "Toggle Diff Highlight Style",
+                "category": "Branch PR Viewer",
+                "icon": "$(color-mode)"
             }
         ],
         "menus": {
@@ -83,6 +105,26 @@
                     "command": "branchPrViewer.refresh",
                     "when": "view == branchPrViewer.branches",
                     "group": "navigation@2"
+                },
+                {
+                    "command": "branchPrViewer.selectBase",
+                    "when": "view == branchPrViewer.currentChanges",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "branchPrViewer.refresh",
+                    "when": "view == branchPrViewer.currentChanges",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "branchPrViewer.toggleDiffStyle",
+                    "when": "view == branchPrViewer.branches",
+                    "group": "navigation@3"
+                },
+                {
+                    "command": "branchPrViewer.toggleDiffStyle",
+                    "when": "view == branchPrViewer.currentChanges",
+                    "group": "navigation@3"
                 }
             ],
             "commandPalette": [
@@ -99,6 +141,19 @@
                     "type": "string",
                     "default": "",
                     "markdownDescription": "Branch to compare against, using three-dot (merge-base) diff like a GitHub PR. When empty, the base is detected automatically: `main`, then `master`."
+                },
+                "branchPrViewer.diffStyle": {
+                    "type": "string",
+                    "enum": [
+                        "theme",
+                        "gutter"
+                    ],
+                    "enumDescriptions": [
+                        "Leave diff colours to the colour theme (full line/word backgrounds).",
+                        "Hide the diff line backgrounds and mark changed lines with a green/red gutter beside the line numbers instead."
+                    ],
+                    "default": "theme",
+                    "markdownDescription": "How changed lines are highlighted in diff editors. `gutter` works by writing diff colour IDs into your user `workbench.colorCustomizations`, so it applies to **every** diff editor, not just this extension's."
                 }
             }
         }

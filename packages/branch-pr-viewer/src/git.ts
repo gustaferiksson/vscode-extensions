@@ -83,6 +83,19 @@ export async function resolveBase(root: string, configured: string): Promise<str
     return null;
 }
 
+/** The checked-out branch name, or `null` when HEAD is detached. */
+export async function currentBranch(root: string): Promise<string | null> {
+    const out = await tryGit(root, ['rev-parse', '--abbrev-ref', 'HEAD']);
+    const name = out?.trim();
+    return name && name !== 'HEAD' ? name : null;
+}
+
+/** Files present on disk but not tracked by git, honouring ignore rules. */
+export async function untrackedFiles(root: string): Promise<string[]> {
+    const out = await tryGit(root, ['ls-files', '--others', '--exclude-standard', '-z']);
+    return out ? out.split('\0').filter(Boolean) : [];
+}
+
 /** The merge base of `base` and `branch` (GitHub's PR base), or `null` if unrelated. */
 export async function mergeBase(root: string, base: string, branch: string): Promise<string | null> {
     const out = await tryGit(root, ['merge-base', base, branch]);
@@ -101,8 +114,9 @@ function toStatus(code: string): FileStatus {
  * Files that differ between `from` and `to`, with rename/copy detection.
  * Uses NUL-delimited output so paths with spaces or unusual characters are safe.
  */
-export async function changedFiles(root: string, from: string, to: string): Promise<ChangedFile[]> {
-    const out = await runGit(root, ['diff', '--name-status', '--find-renames', '-z', from, to]);
+export async function changedFiles(root: string, from: string, to?: string): Promise<ChangedFile[]> {
+    const revs = to === undefined ? [from] : [from, to];
+    const out = await runGit(root, ['diff', '--name-status', '--find-renames', '-z', ...revs]);
     const parts = out.split('\0');
 
     const files: ChangedFile[] = [];
