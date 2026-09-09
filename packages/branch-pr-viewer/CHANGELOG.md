@@ -2,6 +2,10 @@
 
 All notable changes to the **Branch PR Viewer** extension are documented here.
 
+## [0.0.6]
+
+- **Open File** button on every file row in both views — opens the file itself (the working-tree copy when present) instead of the diff.
+
 ## [0.0.5]
 
 - Gutter stripes no longer add marks to the editor's overview ruler — the diff editor's own change ruler already covers that.

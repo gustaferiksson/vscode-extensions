@@ -55,6 +55,7 @@ Open several repositories at once (e.g. a monorepo split, or `api` + `web` side 
 | --- | --- |
 | **Branch PR Viewer: Refresh** | Reload branches and diffs (title-bar refresh icon). |
 | **Branch PR Viewer: Select Base Branch…** | Pick the base branch to compare against. |
+| **Branch PR Viewer: Open File** | Open the file itself (hover a file row) instead of its diff. |
 | **Branch PR Viewer: Toggle Diff Highlight Style** | Switch between theme diff colours and green/red gutter marks. |
 
 ## Notes

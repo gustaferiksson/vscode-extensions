@@ -2,7 +2,7 @@
     "name": "branch-pr-viewer",
     "displayName": "Branch PR Viewer",
     "description": "Browse local branches newest-first and review their changed files like a GitHub PR — native diff, no remote required.",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "publisher": "gustaferiksson",
     "author": "Gustaf Eriksson",
     "license": "MIT",
@@ -92,6 +92,12 @@
                 "title": "Toggle Diff Highlight Style",
                 "category": "Branch PR Viewer",
                 "icon": "$(color-mode)"
+            },
+            {
+                "command": "branchPrViewer.openFile",
+                "title": "Open File",
+                "category": "Branch PR Viewer",
+                "icon": "$(go-to-file)"
             }
         ],
         "menus": {
@@ -131,6 +137,22 @@
                 {
                     "command": "branchPrViewer.openDiff",
                     "when": "false"
+                },
+                {
+                    "command": "branchPrViewer.openFile",
+                    "when": "false"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "branchPrViewer.openFile",
+                    "when": "view == branchPrViewer.branches && viewItem == file",
+                    "group": "inline"
+                },
+                {
+                    "command": "branchPrViewer.openFile",
+                    "when": "view == branchPrViewer.currentChanges && viewItem == file",
+                    "group": "inline"
                 }
             ]
         },

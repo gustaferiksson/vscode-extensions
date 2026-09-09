@@ -4,7 +4,7 @@ import { applyDiffStyle, toggleDiffStyle } from './diffStyle';
 import { discoverRepoRoot, listBranches } from './git';
 import { registerProviders } from './providers';
 import { DiffStripes } from './stripes';
-import { BranchTreeProvider, openFileDiff, type TreeNode } from './tree';
+import { BranchTreeProvider, openFile, openFileDiff, type TreeNode } from './tree';
 
 /** The slice of the built-in Git extension API we rely on for repo discovery. */
 type GitRepository = {
@@ -97,6 +97,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         ...registerProviders(),
         vscode.commands.registerCommand('branchPrViewer.refresh', refreshAll),
         vscode.commands.registerCommand('branchPrViewer.openDiff', (node?: TreeNode) => openFileDiff(stripes, node)),
+        vscode.commands.registerCommand('branchPrViewer.openFile', openFile),
         vscode.window.onDidChangeVisibleTextEditors(refreshStripes),
         vscode.workspace.onDidSaveTextDocument((document) => {
             if (stripes.tracks(document.uri)) refreshStripes();

@@ -1,3 +1,4 @@
+import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import {
@@ -366,6 +367,19 @@ export function nodeTreeItem(node: RepoNode | DirNode | FileNode | MessageNode):
     item.iconPath = new vscode.ThemeIcon('info');
     item.contextValue = 'message';
     return item;
+}
+
+/** Opens the file itself rather than a diff: the working-tree copy when it exists, else the branch's version. */
+export async function openFile(node?: TreeNode): Promise<void> {
+    if (node?.kind !== 'file') return;
+
+    const onDisk = vscode.Uri.file(path.join(node.root, node.file.path));
+    const exists = await fs
+        .stat(onDisk.fsPath)
+        .then(() => true)
+        .catch(() => false);
+
+    await vscode.window.showTextDocument(exists ? onDisk : rightUri(node), { preview: true });
 }
 
 export async function openFileDiff(stripes: DiffStripes, node?: TreeNode): Promise<void> {
