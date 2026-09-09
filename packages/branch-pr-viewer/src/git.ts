@@ -166,6 +166,41 @@ export async function diffStat(root: string, ...revs: string[]): Promise<DiffSta
     return { additions, deletions };
 }
 
+export type LineRanges = { readonly added: readonly [number, number][]; readonly removed: readonly [number, number][] };
+
+const HUNK = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
+
+/**
+ * Changed line ranges (1-based, inclusive) for one file: `removed` on the `from`
+ * side, `added` on the `to` side — the working tree when `to` is omitted.
+ */
+export async function changedLines(
+    root: string,
+    from: string,
+    paths: readonly string[],
+    to?: string
+): Promise<LineRanges> {
+    const revs = to === undefined ? [from] : [from, to];
+    const out = await tryGit(root, ['diff', '-U0', '--find-renames', ...revs, '--', ...paths]);
+    if (!out) return { added: [], removed: [] };
+
+    const added: [number, number][] = [];
+    const removed: [number, number][] = [];
+    for (const line of out.split('\n')) {
+        const match = HUNK.exec(line);
+        if (!match) continue;
+        const [oldStart, oldCount, newStart, newCount] = [
+            Number(match[1]),
+            match[2] === undefined ? 1 : Number(match[2]),
+            Number(match[3]),
+            match[4] === undefined ? 1 : Number(match[4]),
+        ];
+        if (oldCount > 0) removed.push([oldStart, oldStart + oldCount - 1]);
+        if (newCount > 0) added.push([newStart, newStart + newCount - 1]);
+    }
+    return { added, removed };
+}
+
 /**
  * Contents of `relPath` at commit `ref`. Resolves to an empty string when the
  * path does not exist at that ref (e.g. the base side of an added file), which

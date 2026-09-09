@@ -25,9 +25,14 @@ The second Activity Bar view, **Current Branch Changes**, skips the branch list 
 The **Toggle Diff Highlight Style** button in either view title switches `branchPrViewer.diffStyle` between:
 
 - **`theme`** (default) — diff colours come from your colour theme, with full line and word backgrounds.
-- **`gutter`** — the line backgrounds go transparent and changed lines are marked green/red in the gutter beside the line numbers, so the code itself stays on the normal editor background.
+- **`gutter`** — the diff line backgrounds go transparent and changed lines get a thin green/red stripe in the gutter beside the line numbers, so the code itself stays on the normal editor background.
 
-Diff highlighting is a workbench colour, not a per-editor one, so `gutter` works by writing the diff colour IDs into your **user** `workbench.colorCustomizations`. It therefore applies to *every* diff editor (Source Control, other extensions), and a theme-scoped block such as `"[Default Dark Modern]": { … }` in your settings will override it.
+Diff highlighting is a workbench colour, not a per-editor one, so switching it off works by writing the diff colour IDs into your **user** `workbench.colorCustomizations`. Two consequences:
+
+- Turning the backgrounds off applies to *every* diff editor (Source Control, other extensions), while the stripes are editor decorations and appear only in diffs opened from this extension.
+- A theme-scoped block such as `"[Default Dark Modern]": { … }` in your settings will override the transparent colours.
+
+Stripes come from `git diff -U0`, so a line you have just typed is striped once the file is saved.
 
 ## Base branch
 

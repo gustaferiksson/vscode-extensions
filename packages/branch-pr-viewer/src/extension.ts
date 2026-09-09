@@ -3,7 +3,8 @@ import { CurrentBranchTreeProvider } from './current';
 import { applyDiffStyle, toggleDiffStyle } from './diffStyle';
 import { discoverRepoRoot, listBranches } from './git';
 import { registerProviders } from './providers';
-import { BranchTreeProvider, openFileDiff } from './tree';
+import { DiffStripes } from './stripes';
+import { BranchTreeProvider, openFileDiff, type TreeNode } from './tree';
 
 /** The slice of the built-in Git extension API we rely on for repo discovery. */
 type GitRepository = {
@@ -37,6 +38,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const sortedRoots = (): string[] => [...roots].sort((a, b) => a.localeCompare(b));
     const tree = new BranchTreeProvider(sortedRoots);
     const current = new CurrentBranchTreeProvider(sortedRoots);
+    const stripes = new DiffStripes();
+    const refreshStripes = (): void => void stripes.refresh();
 
     let api: GitAPI | undefined;
 
@@ -44,7 +47,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         tree.refresh();
         current.refresh();
     };
-    const refreshCurrentSoon = debounce(() => current.refresh(), 200);
+    const refreshCurrentSoon = debounce(() => {
+        current.refresh();
+        refreshStripes();
+    }, 200);
     const refreshBranchesSoon = debounce(() => tree.refresh(), 200);
 
     const lastHead = new Map<string, string>();
@@ -82,6 +88,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     context.subscriptions.push(
         tree,
         current,
+        stripes,
         new vscode.Disposable(() => {
             for (const watcher of repoStates) watcher.dispose();
         }),
@@ -89,12 +96,19 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         vscode.window.registerTreeDataProvider('branchPrViewer.currentChanges', current),
         ...registerProviders(),
         vscode.commands.registerCommand('branchPrViewer.refresh', refreshAll),
-        vscode.commands.registerCommand('branchPrViewer.openDiff', openFileDiff),
+        vscode.commands.registerCommand('branchPrViewer.openDiff', (node?: TreeNode) => openFileDiff(stripes, node)),
+        vscode.window.onDidChangeVisibleTextEditors(refreshStripes),
+        vscode.workspace.onDidSaveTextDocument((document) => {
+            if (stripes.tracks(document.uri)) refreshStripes();
+        }),
         vscode.commands.registerCommand('branchPrViewer.toggleDiffStyle', toggleDiffStyle),
         vscode.commands.registerCommand('branchPrViewer.selectBase', () => selectBase(() => [...roots])),
         vscode.workspace.onDidChangeConfiguration((event) => {
             if (event.affectsConfiguration('branchPrViewer.baseBranch')) refreshAll();
-            if (event.affectsConfiguration('branchPrViewer.diffStyle')) void applyDiffStyle();
+            if (event.affectsConfiguration('branchPrViewer.diffStyle')) {
+                void applyDiffStyle();
+                refreshStripes();
+            }
         }),
         vscode.workspace.onDidChangeWorkspaceFolders(() => void refreshRoots())
     );

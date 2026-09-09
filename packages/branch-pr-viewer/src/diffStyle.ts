@@ -1,16 +1,13 @@
 import * as vscode from 'vscode';
 
 const TRANSPARENT = '#00000000';
-const ADDED = '#3fb95080';
-const REMOVED = '#f8514980';
-
 const GUTTER_COLORS: Readonly<Record<string, string>> = {
     'diffEditor.insertedTextBackground': TRANSPARENT,
     'diffEditor.removedTextBackground': TRANSPARENT,
     'diffEditor.insertedLineBackground': TRANSPARENT,
     'diffEditor.removedLineBackground': TRANSPARENT,
-    'diffEditorGutter.insertedLineBackground': ADDED,
-    'diffEditorGutter.removedLineBackground': REMOVED,
+    'diffEditorGutter.insertedLineBackground': TRANSPARENT,
+    'diffEditorGutter.removedLineBackground': TRANSPARENT,
 };
 
 type Customizations = Record<string, unknown>;
@@ -42,8 +39,9 @@ function style(): string {
 
 /**
  * Diff highlighting is a workbench colour, not something an editor can be opened
- * with, so `gutter` style is applied by writing the relevant colour IDs into the
- * user's `workbench.colorCustomizations` — which affects every diff editor.
+ * with, so `gutter` style clears it by writing the relevant colour IDs into the
+ * user's `workbench.colorCustomizations` — which affects every diff editor. The
+ * green/red stripes that replace it are editor decorations (see DiffStripes).
  */
 export async function applyDiffStyle(): Promise<void> {
     const current = globalCustomizations();

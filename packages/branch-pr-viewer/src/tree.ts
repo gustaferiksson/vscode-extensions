@@ -11,6 +11,7 @@ import {
     resolveBase,
 } from './git';
 import { buildContentUri, buildFolderUri } from './providers';
+import type { DiffStripes } from './stripes';
 
 export type RepoNode = { readonly kind: 'repo'; readonly root: string; readonly label: string };
 type BranchNode = {
@@ -367,13 +368,16 @@ export function nodeTreeItem(node: RepoNode | DirNode | FileNode | MessageNode):
     return item;
 }
 
-export async function openFileDiff(node?: TreeNode): Promise<void> {
+export async function openFileDiff(stripes: DiffStripes, node?: TreeNode): Promise<void> {
     if (node?.kind !== 'file') return;
 
     const displayPath = node.file.path;
     const left = buildContentUri(node.root, node.mergeBaseRef, node.file.oldPath ?? displayPath);
+    const right = rightUri(node);
     const rightLabel = node.right.kind === 'worktree' ? 'working tree' : node.branchName;
     const title = `${path.basename(displayPath)} (${node.base} ↔ ${rightLabel})`;
 
-    await vscode.commands.executeCommand('vscode.diff', left, rightUri(node), title);
+    stripes.track(left, right, node);
+    await vscode.commands.executeCommand('vscode.diff', left, right, title);
+    await stripes.refresh();
 }

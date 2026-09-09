@@ -2,6 +2,10 @@
 
 All notable changes to the **Branch PR Viewer** extension are documented here.
 
+## [0.0.4]
+
+- `diffStyle: "gutter"` now draws a thin green/red stripe next to the changed lines instead of tinting the whole line-number margin.
+
 ## [0.0.3]
 
 - New **Current Branch Changes** Activity Bar view: the checked-out branch's changes vs its base, as a folder tree, like a GitHub PR's "Files changed".
