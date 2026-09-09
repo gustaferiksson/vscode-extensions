@@ -14,8 +14,6 @@ function stripeType(color: string): vscode.TextEditorDecorationType {
     return vscode.window.createTextEditorDecorationType({
         gutterIconPath: stripeIcon(color),
         gutterIconSize: 'contain',
-        overviewRulerColor: color,
-        overviewRulerLane: vscode.OverviewRulerLane.Left,
         isWholeLine: true,
     });
 }

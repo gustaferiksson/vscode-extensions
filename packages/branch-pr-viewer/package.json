@@ -2,7 +2,7 @@
     "name": "branch-pr-viewer",
     "displayName": "Branch PR Viewer",
     "description": "Browse local branches newest-first and review their changed files like a GitHub PR — native diff, no remote required.",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "publisher": "gustaferiksson",
     "author": "Gustaf Eriksson",
     "license": "MIT",

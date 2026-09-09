@@ -2,6 +2,10 @@
 
 All notable changes to the **Branch PR Viewer** extension are documented here.
 
+## [0.0.5]
+
+- Gutter stripes no longer add marks to the editor's overview ruler — the diff editor's own change ruler already covers that.
+
 ## [0.0.4]
 
 - `diffStyle: "gutter"` now draws a thin green/red stripe next to the changed lines instead of tinting the whole line-number margin.
