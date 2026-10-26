@@ -2,6 +2,10 @@
 
 All notable changes to the **Branch PR Viewer** extension are documented here.
 
+## [0.0.7]
+
+- Toggling the diff style with several windows open no longer corrupts `settings.json`: only the focused window writes the colour overrides.
+
 ## [0.0.6]
 
 - **Open File** button on every file row in both views — opens the file itself (the working-tree copy when present) instead of the diff.

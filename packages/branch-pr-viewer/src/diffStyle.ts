@@ -44,6 +44,8 @@ function style(): string {
  * green/red stripes that replace it are editor decorations (see DiffStripes).
  */
 export async function applyDiffStyle(): Promise<void> {
+    // Every window's extension host runs this; concurrent writes to settings.json splice each other's edits.
+    if (!vscode.window.state.focused) return;
     const current = globalCustomizations();
     const next = style() === 'gutter' ? withGutterColors(current) : withoutGutterColors(current);
     if (sameColors(current, next)) return;
