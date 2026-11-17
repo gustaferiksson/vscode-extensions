@@ -8,6 +8,7 @@ All notable changes to the **Branch PR Viewer** extension are documented here.
 - File rows show `+added −deleted` line counts against the merge base, and a **●** when the file has uncommitted changes.
 - The view title (or each repository row, with several repositories) shows `branch → base` and the total line counts.
 - New `branchPrViewer.viewMode` setting with **View as List** / **View as Tree** buttons: show changed files as a flat list sorted by path instead of a folder tree.
+- Diffs mark local (uncommitted) lines on the right with a blue gutter stripe in both diff styles; in `gutter` style, green now means committed branch changes only.
 
 ## [0.0.7]
 

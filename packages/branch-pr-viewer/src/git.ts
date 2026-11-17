@@ -74,8 +74,8 @@ export async function currentBranch(root: string): Promise<string | null> {
 }
 
 /** Files present on disk but not tracked by git, honouring ignore rules. */
-export async function untrackedFiles(root: string): Promise<string[]> {
-    const out = await tryGit(root, ['ls-files', '--others', '--exclude-standard', '-z']);
+export async function untrackedFiles(root: string, paths: readonly string[] = []): Promise<string[]> {
+    const out = await tryGit(root, ['ls-files', '--others', '--exclude-standard', '-z', '--', ...paths]);
     return out ? out.split('\0').filter(Boolean) : [];
 }
 

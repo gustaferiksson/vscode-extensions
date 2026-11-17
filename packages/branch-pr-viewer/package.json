@@ -170,8 +170,8 @@
                         "gutter"
                     ],
                     "enumDescriptions": [
-                        "Leave diff colours to the colour theme (full line/word backgrounds).",
-                        "Hide the diff line backgrounds and mark changed lines with a thin green/red stripe in the gutter beside the line numbers instead."
+                        "Leave diff colours to the colour theme (full line/word backgrounds); uncommitted lines still get a blue gutter stripe.",
+                        "Hide the diff line backgrounds and mark changed lines with a thin gutter stripe beside the line numbers instead: green for committed, blue for uncommitted, red for removed."
                     ],
                     "default": "theme",
                     "markdownDescription": "How changed lines are highlighted in diff editors. `gutter` switches the diff line backgrounds off by writing colour IDs into your user `workbench.colorCustomizations` — which affects **every** diff editor — and replaces them with a thin gutter stripe in this extension's own diffs."
