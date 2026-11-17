@@ -11,6 +11,8 @@ Open the **Current Branch Changes** view from the Activity Bar.
 - The scope is **merge base → working tree** (`git diff $(git merge-base base HEAD)`): committed work plus anything uncommitted, including new untracked files. Commits that landed on the base *after* the branch diverged are excluded, the same as a GitHub PR.
 - Clicking a file opens the diff with the merge-base version on the left and **the file on disk on the right, editable**, so you can fix things while reviewing and save straight into the working tree.
 - Files are badged **A / M / D / R** (added, modified, deleted, renamed) just like the Source Control view.
+- Each file shows its `+added −deleted` line counts against the merge base (none for binary files), and a **●** when it has uncommitted changes (differs from `HEAD`, or is untracked).
+- The view title shows `branch → base` with the total line counts; with several repositories, each repository row shows its own.
 - The tree updates itself as you commit, check out branches or edit files.
 
 ## Diff highlight style

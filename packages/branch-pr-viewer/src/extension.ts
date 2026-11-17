@@ -74,7 +74,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         new vscode.Disposable(() => {
             for (const watcher of repoStates) watcher.dispose();
         }),
-        vscode.window.registerTreeDataProvider('branchPrViewer.currentChanges', current),
         ...registerProviders(),
         vscode.commands.registerCommand('branchPrViewer.refresh', refreshAll),
         vscode.commands.registerCommand('branchPrViewer.openDiff', (node?: TreeNode) => openFileDiff(stripes, node)),

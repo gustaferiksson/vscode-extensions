@@ -5,7 +5,12 @@ import type { ChangedFile } from './git';
 import { buildContentUri, buildFolderUri } from './providers';
 import type { DiffStripes } from './stripes';
 
-export type RepoNode = { readonly kind: 'repo'; readonly root: string; readonly label: string };
+export type RepoNode = {
+    readonly kind: 'repo';
+    readonly root: string;
+    readonly label: string;
+    readonly description?: string;
+};
 export type DirNode = {
     readonly kind: 'dir';
     /** Display segment(s) — collapsed chains such as `src/analytics-agent`. */
@@ -116,6 +121,7 @@ function rightUri(node: FileNode): vscode.Uri {
 
 function fileTreeItem(node: FileNode): vscode.TreeItem {
     const displayPath = node.file.path;
+    const stat = node.file.stat;
     const item = new vscode.TreeItem(
         buildContentUri(node.root, node.mergeBaseRef, displayPath, node.file.status),
         vscode.TreeItemCollapsibleState.None
@@ -124,6 +130,9 @@ function fileTreeItem(node: FileNode): vscode.TreeItem {
     item.tooltip = node.file.oldPath
         ? `${node.file.oldPath} → ${displayPath} (${STATUS_LABEL[node.file.status]})`
         : `${displayPath} (${STATUS_LABEL[node.file.status]})`;
+    item.description = [stat && `+${stat.additions} −${stat.deletions}`, node.file.uncommitted && '●']
+        .filter(Boolean)
+        .join(' ');
     item.contextValue = 'file';
     item.command = { command: 'branchPrViewer.openDiff', title: 'Open Diff', arguments: [node] };
     return item;
@@ -133,6 +142,7 @@ export function nodeTreeItem(node: TreeNode): vscode.TreeItem {
     if (node.kind === 'repo') {
         const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.Expanded);
         item.id = `repo:${node.root}`;
+        item.description = node.description;
         item.iconPath = new vscode.ThemeIcon('repo');
         item.contextValue = 'repo';
         return item;

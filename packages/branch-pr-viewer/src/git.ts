@@ -1,4 +1,6 @@
 import { execFile } from 'node:child_process';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
@@ -14,7 +16,12 @@ export type ChangedFile = {
     readonly path: string;
     /** Original path for renames/copies. */
     readonly oldPath?: string;
+    /** Absent for binary files. */
+    readonly stat?: DiffStat;
+    readonly uncommitted?: boolean;
 };
+
+export type DiffStat = { readonly additions: number; readonly deletions: number };
 
 /** Runs git in `root`, resolving to trimmed stdout. Rejects with stderr on failure. */
 async function runGit(root: string, args: readonly string[]): Promise<string> {
@@ -72,6 +79,11 @@ export async function untrackedFiles(root: string): Promise<string[]> {
     return out ? out.split('\0').filter(Boolean) : [];
 }
 
+export async function uncommittedFiles(root: string): Promise<Set<string>> {
+    const out = await tryGit(root, ['diff', '--name-only', '--no-renames', '-z', 'HEAD']);
+    return new Set(out ? out.split('\0').filter(Boolean) : []);
+}
+
 /** The merge base of `base` and `branch` (GitHub's PR base), or `null` if unrelated. */
 export async function mergeBase(root: string, base: string, branch: string): Promise<string | null> {
     const out = await tryGit(root, ['merge-base', base, branch]);
@@ -119,6 +131,51 @@ export async function changedFiles(root: string, from: string): Promise<ChangedF
         i += 2;
     }
     return files;
+}
+
+const NUMSTAT = /^(\d+|-)\t(\d+|-)\t(.*)$/s;
+
+export async function diffStats(root: string, from: string): Promise<Map<string, DiffStat>> {
+    const out = await tryGit(root, ['diff', '--numstat', '--find-renames', '-z', from]);
+    const parts = out ? out.split('\0') : [];
+
+    const stats = new Map<string, DiffStat>();
+    let i = 0;
+    while (i < parts.length) {
+        const match = NUMSTAT.exec(parts[i]);
+        if (!match) {
+            i += 1;
+            continue;
+        }
+
+        // A -z rename record has an empty path field followed by the old and new path as NUL fields.
+        const [, additions, deletions, filePath] = match;
+        const newPath = filePath || parts[i + 2];
+        i += filePath ? 1 : 3;
+        if (newPath === undefined || additions === '-') continue;
+        stats.set(newPath, { additions: Number(additions), deletions: Number(deletions) });
+    }
+    return stats;
+}
+
+const READ_BATCH = 16;
+
+export async function untrackedStats(root: string, paths: readonly string[]): Promise<Map<string, DiffStat>> {
+    const stats = new Map<string, DiffStat>();
+    for (let start = 0; start < paths.length; start += READ_BATCH) {
+        const batch = paths.slice(start, start + READ_BATCH);
+        const contents = await Promise.all(
+            batch.map((relPath) => fs.readFile(path.join(root, relPath)).catch(() => undefined))
+        );
+
+        for (const [index, content] of contents.entries()) {
+            if (!content || content.includes(0)) continue;
+            const text = content.toString();
+            const additions = text.split('\n').length - (text === '' || text.endsWith('\n') ? 1 : 0);
+            stats.set(batch[index], { additions, deletions: 0 });
+        }
+    }
+    return stats;
 }
 
 export type LineRanges = { readonly added: readonly [number, number][]; readonly removed: readonly [number, number][] };
