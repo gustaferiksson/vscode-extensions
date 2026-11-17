@@ -67,7 +67,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         }
         watchRepoStates();
         refreshAll();
-        current.fetchBases([...roots].filter((root) => !previous.has(root)));
+        for (const root of roots) {
+            if (!previous.has(root)) void current.fetchBase(root);
+        }
     };
 
     context.subscriptions.push(
@@ -79,7 +81,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         ...registerProviders(),
         vscode.commands.registerCommand('branchPrViewer.refresh', () => {
             refreshAll();
-            current.fetchBases(sortedRoots());
+            for (const root of roots) void current.fetchBase(root);
         }),
         vscode.commands.registerCommand('branchPrViewer.openDiff', (node?: TreeNode) => openFileDiff(stripes, node)),
         vscode.commands.registerCommand('branchPrViewer.openFile', openFile),

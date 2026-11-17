@@ -5,7 +5,7 @@ import {
     changedFiles,
     currentBranch,
     diffStats,
-    fetchBase,
+    fetchRemote,
     mergeBase,
     resolveBase,
     uncommittedFiles,
@@ -29,10 +29,6 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<TreeNo
     refresh(): void {
         this.cache.clear();
         this.emitter.fire(undefined);
-    }
-
-    fetchBases(roots: readonly string[]): void {
-        for (const root of roots) void this.fetchRepoBase(root);
     }
 
     dispose(): void {
@@ -73,14 +69,14 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<TreeNo
         return changes;
     }
 
-    private async fetchRepoBase(root: string): Promise<void> {
+    async fetchBase(root: string): Promise<void> {
         if (this.fetching.has(root)) return;
         this.fetching.add(root);
 
         try {
             const branch = await currentBranch(root);
             const base = branch ? await resolveBase(root, branch, this.baseBranch()) : null;
-            if (base && (await fetchBase(root, base))) this.refresh();
+            if (base && (await fetchRemote(root, base))) this.refresh();
         } finally {
             this.fetching.delete(root);
         }

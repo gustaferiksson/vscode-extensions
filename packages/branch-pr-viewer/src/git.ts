@@ -61,8 +61,10 @@ export async function listBranches(root: string): Promise<{ local: string[]; rem
 export type BaseRef = { readonly ref: string; readonly name: string; readonly remote?: string };
 
 export async function resolveBase(root: string, branch: string, configured: string): Promise<BaseRef | null> {
-    const upstream = await tryGit(root, ['for-each-ref', '--format=%(upstream:remotename)', `refs/heads/${branch}`]);
-    const remote = upstream?.trim() || 'origin';
+    const upstream = (
+        await tryGit(root, ['for-each-ref', '--format=%(upstream:remotename)', `refs/heads/${branch}`])
+    )?.trim();
+    const remote = upstream && upstream !== '.' ? upstream : 'origin';
     const remoteHead = (await tryGit(root, ['symbolic-ref', '--short', `refs/remotes/${remote}/HEAD`]))?.trim();
     const name = configured.trim();
 
@@ -87,7 +89,7 @@ export async function resolveBase(root: string, branch: string, configured: stri
     return null;
 }
 
-export async function fetchBase(root: string, base: BaseRef): Promise<boolean> {
+export async function fetchRemote(root: string, base: BaseRef): Promise<boolean> {
     if (!base.remote) return false;
     const branch = base.name.slice(base.remote.length + 1);
     return (await tryGit(root, ['fetch', '--quiet', '--no-tags', base.remote, branch])) !== null;
