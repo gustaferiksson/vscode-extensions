@@ -148,7 +148,7 @@
                 "branchPrViewer.baseBranch": {
                     "type": "string",
                     "default": "",
-                    "markdownDescription": "Branch to compare against, using three-dot (merge-base) diff like a GitHub PR. When empty, the base is detected automatically: `main`, then `master`."
+                    "markdownDescription": "Branch to compare against, using three-dot (merge-base) diff like a GitHub PR. A bare name such as `develop` uses the remote-tracking `origin/develop` when it exists (the branch's upstream remote, else `origin`), otherwise the local branch; a name such as `upstream/main` is used as is. When empty, the base is the remote's default branch, then `main`, then `master` on the remote, then local `main`, then `master`. A remote base is fetched in the background when the view loads and on **Refresh**."
                 },
                 "branchPrViewer.viewMode": {
                     "type": "string",

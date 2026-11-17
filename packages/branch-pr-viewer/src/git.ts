@@ -29,6 +29,7 @@ async function runGit(root: string, args: readonly string[]): Promise<string> {
         cwd: root,
         encoding: 'utf8',
         maxBuffer: MAX_BUFFER,
+        env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
     });
     return stdout;
 }
@@ -48,22 +49,48 @@ export async function discoverRepoRoot(folder: string): Promise<string | null> {
     return out ? out.trim() : null;
 }
 
-export async function listBranches(root: string): Promise<string[]> {
-    const out = await runGit(root, ['for-each-ref', 'refs/heads', '--format=%(refname:short)']);
-    return out.split('\n').filter(Boolean);
+export async function listBranches(root: string): Promise<{ local: string[]; remote: string[] }> {
+    const out = await runGit(root, ['for-each-ref', 'refs/heads', 'refs/remotes', '--format=%(refname)']);
+    const refs = out.split('\n').filter((ref) => ref && !ref.endsWith('/HEAD'));
+    return {
+        local: refs.filter((ref) => ref.startsWith('refs/heads/')).map((ref) => ref.slice('refs/heads/'.length)),
+        remote: refs.filter((ref) => ref.startsWith('refs/remotes/')).map((ref) => ref.slice('refs/remotes/'.length)),
+    };
 }
 
-/**
- * Picks the base branch for three-dot comparisons: the configured branch if it
- * exists locally, otherwise `main`, then `master`. Returns `null` if none exist.
- */
-export async function resolveBase(root: string, configured: string): Promise<string | null> {
-    const candidates = [configured.trim(), 'main', 'master'].filter(Boolean);
-    for (const name of candidates) {
-        const found = await tryGit(root, ['rev-parse', '--verify', '--quiet', `refs/heads/${name}`]);
-        if (found) return name;
+export type BaseRef = { readonly ref: string; readonly name: string; readonly remote?: string };
+
+export async function resolveBase(root: string, branch: string, configured: string): Promise<BaseRef | null> {
+    const upstream = await tryGit(root, ['for-each-ref', '--format=%(upstream:remotename)', `refs/heads/${branch}`]);
+    const remote = upstream?.trim() || 'origin';
+    const remoteHead = (await tryGit(root, ['symbolic-ref', '--short', `refs/remotes/${remote}/HEAD`]))?.trim();
+    const name = configured.trim();
+
+    const candidates: BaseRef[] = [
+        ...(name
+            ? [
+                  { ref: `refs/remotes/${name}`, name, remote: name.split('/')[0] },
+                  { ref: `refs/remotes/${remote}/${name}`, name: `${remote}/${name}`, remote },
+                  { ref: `refs/heads/${name}`, name },
+              ]
+            : []),
+        ...(remoteHead ? [{ ref: `refs/remotes/${remoteHead}`, name: remoteHead, remote }] : []),
+        { ref: `refs/remotes/${remote}/main`, name: `${remote}/main`, remote },
+        { ref: `refs/remotes/${remote}/master`, name: `${remote}/master`, remote },
+        { ref: 'refs/heads/main', name: 'main' },
+        { ref: 'refs/heads/master', name: 'master' },
+    ];
+    for (const candidate of candidates) {
+        const found = await tryGit(root, ['rev-parse', '--verify', '--quiet', candidate.ref]);
+        if (found) return candidate;
     }
     return null;
+}
+
+export async function fetchBase(root: string, base: BaseRef): Promise<boolean> {
+    if (!base.remote) return false;
+    const branch = base.name.slice(base.remote.length + 1);
+    return (await tryGit(root, ['fetch', '--quiet', '--no-tags', base.remote, branch])) !== null;
 }
 
 /** The checked-out branch name, or `null` when HEAD is detached. */

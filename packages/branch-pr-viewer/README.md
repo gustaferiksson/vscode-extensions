@@ -42,7 +42,17 @@ Stripes come from `git diff -U0` (against the merge base for green/red, against 
 
 ## Base branch
 
-By default the base is detected automatically: **`main`**, falling back to **`master`**. Set a specific base with the **Select Base Branch…** button in the view title, or via the `branchPrViewer.baseBranch` setting.
+The base is resolved on the remote first, so you never have to update your local `main`. The remote is the current branch's upstream remote, or `origin` when it has none. By default the base is detected automatically, in this order:
+
+1. The remote's default branch (`origin/HEAD`, e.g. `origin/main`).
+2. `origin/main`, then `origin/master`.
+3. Local `main`, then `master`.
+
+Set a specific base with the **Select Base Branch…** button in the view title (it lists local and remote-tracking branches), or via the `branchPrViewer.baseBranch` setting. A bare name such as `develop` uses `origin/develop` when it exists, otherwise the local branch; a name such as `upstream/main` is used as is.
+
+When the base is a remote branch, it is fetched quietly in the background (`git fetch <remote> <branch>`) when the view loads and whenever you press **Refresh**; a failed fetch is ignored. The view title shows the resolved base, e.g. `feature → origin/main`.
+
+Checked out on the base branch itself (say `main`, with base `origin/main`), the view shows your unpushed commits plus uncommitted work.
 
 ## Multi-root workspaces
 
@@ -52,7 +62,7 @@ Open several repositories at once (e.g. a monorepo split, or `api` + `web` side 
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `branchPrViewer.baseBranch` | `""` | Branch to compare against with three-dot (merge-base) diff. When empty, the base is auto-detected: `main`, then `master`. |
+| `branchPrViewer.baseBranch` | `""` | Branch to compare against with three-dot (merge-base) diff, preferring the remote-tracking branch. When empty, the base is auto-detected: the remote's default branch, then `main`/`master` on the remote, then locally. |
 | `branchPrViewer.viewMode` | `"tree"` | `tree` groups changed files into folders; `list` shows them flat, sorted by path. |
 | `branchPrViewer.diffStyle` | `"theme"` | `theme` leaves diff colours to the theme; `gutter` hides line backgrounds and marks changes in the gutter. |
 
@@ -60,8 +70,8 @@ Open several repositories at once (e.g. a monorepo split, or `api` + `web` side 
 
 | Command | Description |
 | --- | --- |
-| **Branch PR Viewer: Refresh** | Reload the changed files (title-bar refresh icon). |
-| **Branch PR Viewer: Select Base Branch…** | Pick the base branch to compare against. |
+| **Branch PR Viewer: Refresh** | Fetch the remote base and reload the changed files (title-bar refresh icon). |
+| **Branch PR Viewer: Select Base Branch…** | Pick the base branch to compare against (local or remote-tracking). |
 | **Branch PR Viewer: Open File** | Open the file itself (hover a file row) instead of its diff. |
 | **Branch PR Viewer: View as List** / **View as Tree** | Switch the view between a flat file list and a folder tree. |
 | **Branch PR Viewer: Toggle Diff Highlight Style** | Switch between theme diff colours and gutter stripes. |

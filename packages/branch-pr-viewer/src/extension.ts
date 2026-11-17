@@ -54,6 +54,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     };
 
     const refreshRoots = async (): Promise<void> => {
+        const previous = new Set(roots);
         roots.clear();
         for (const repo of api?.repositories ?? []) roots.add(repo.rootUri.fsPath);
 
@@ -66,6 +67,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         }
         watchRepoStates();
         refreshAll();
+        current.fetchBases([...roots].filter((root) => !previous.has(root)));
     };
 
     context.subscriptions.push(
@@ -75,7 +77,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             for (const watcher of repoStates) watcher.dispose();
         }),
         ...registerProviders(),
-        vscode.commands.registerCommand('branchPrViewer.refresh', refreshAll),
+        vscode.commands.registerCommand('branchPrViewer.refresh', () => {
+            refreshAll();
+            current.fetchBases(sortedRoots());
+        }),
         vscode.commands.registerCommand('branchPrViewer.openDiff', (node?: TreeNode) => openFileDiff(stripes, node)),
         vscode.commands.registerCommand('branchPrViewer.openFile', openFile),
         vscode.window.onDidChangeVisibleTextEditors(refreshStripes),
@@ -127,16 +132,19 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
 /** Prompts for a base branch (union across repos) and stores it in the setting. */
 async function selectBase(getRoots: () => string[]): Promise<void> {
-    const names = new Set<string>();
+    const local = new Set<string>();
+    const remote = new Set<string>();
     for (const root of getRoots()) {
         try {
-            for (const name of await listBranches(root)) names.add(name);
+            const branches = await listBranches(root);
+            for (const name of branches.local) local.add(name);
+            for (const name of branches.remote) remote.add(name);
         } catch {
             // Skip repos that fail to enumerate.
         }
     }
 
-    if (names.size === 0) {
+    if (local.size === 0 && remote.size === 0) {
         vscode.window.showInformationMessage('No branches found to choose a base from.');
         return;
     }
@@ -144,9 +152,9 @@ async function selectBase(getRoots: () => string[]): Promise<void> {
     const config = vscode.workspace.getConfiguration('branchPrViewer');
     const current = config.get<string>('baseBranch', '');
     const picked = await vscode.window.showQuickPick(
-        [...names].sort((a, b) => a.localeCompare(b)),
+        [...[...local].sort((a, b) => a.localeCompare(b)), ...[...remote].sort((a, b) => a.localeCompare(b))],
         {
-            placeHolder: `Base branch to compare against (current: ${current || 'auto — main, then master'})`,
+            placeHolder: `Base branch to compare against (current: ${current || 'auto — remote default branch, then main, then master'})`,
         }
     );
     if (picked === undefined) return;

@@ -5,6 +5,7 @@ import {
     changedFiles,
     currentBranch,
     diffStats,
+    fetchBase,
     mergeBase,
     resolveBase,
     uncommittedFiles,
@@ -20,6 +21,7 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<TreeNo
     readonly onDidChangeTreeData = this.emitter.event;
 
     private readonly cache = new Map<string, RepoChanges>();
+    private readonly fetching = new Set<string>();
     private readonly view = vscode.window.createTreeView('branchPrViewer.currentChanges', { treeDataProvider: this });
 
     constructor(private readonly repoRoots: () => string[]) {}
@@ -27,6 +29,10 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<TreeNo
     refresh(): void {
         this.cache.clear();
         this.emitter.fire(undefined);
+    }
+
+    fetchBases(roots: readonly string[]): void {
+        for (const root of roots) void this.fetchRepoBase(root);
     }
 
     dispose(): void {
@@ -67,6 +73,19 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<TreeNo
         return changes;
     }
 
+    private async fetchRepoBase(root: string): Promise<void> {
+        if (this.fetching.has(root)) return;
+        this.fetching.add(root);
+
+        try {
+            const branch = await currentBranch(root);
+            const base = branch ? await resolveBase(root, branch, this.baseBranch()) : null;
+            if (base && (await fetchBase(root, base))) this.refresh();
+        } finally {
+            this.fetching.delete(root);
+        }
+    }
+
     private async computeChanges(root: string): Promise<RepoChanges> {
         const parentId = `repo:${root}`;
         const branch = await currentBranch(root);
@@ -74,16 +93,16 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<TreeNo
             return { nodes: [messageNode(parentId, 'HEAD is detached — check out a branch to see its changes.')] };
         }
 
-        const base = await resolveBase(root, this.baseBranch());
+        const base = await resolveBase(root, branch, this.baseBranch());
         if (!base) {
             return { nodes: [messageNode(parentId, 'Base branch not found — set "branchPrViewer.baseBranch".')] };
         }
-        if (base === branch) {
-            return { nodes: [messageNode(parentId, `On the base branch (${base}) — nothing to compare.`)] };
+        if (!base.remote && base.name === branch) {
+            return { nodes: [messageNode(parentId, `On the base branch (${branch}) — nothing to compare.`)] };
         }
 
-        const mergeBaseRef = await mergeBase(root, base, branch);
-        if (!mergeBaseRef) return { nodes: [messageNode(parentId, `No common history with ${base}.`)] };
+        const mergeBaseRef = await mergeBase(root, base.ref, branch);
+        if (!mergeBaseRef) return { nodes: [messageNode(parentId, `No common history with ${base.name}.`)] };
 
         let files: ChangedFile[];
         try {
@@ -91,9 +110,9 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<TreeNo
         } catch {
             return { nodes: [messageNode(parentId, 'Failed to compute diff.')] };
         }
-        if (files.length === 0) return { nodes: [messageNode(parentId, `No changes vs ${base}.`)] };
+        if (files.length === 0) return { nodes: [messageNode(parentId, `No changes vs ${base.name}.`)] };
 
-        const ctx = { root, base, branchName: branch, mergeBaseRef };
+        const ctx = { root, base: base.name, branchName: branch, mergeBaseRef };
         const listed = vscode.workspace.getConfiguration('branchPrViewer').get<string>('viewMode', 'tree') === 'list';
         const nodes = listed
             ? [...files]
@@ -110,7 +129,7 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<TreeNo
 
         const additions = files.reduce((sum, file) => sum + (file.stat?.additions ?? 0), 0);
         const deletions = files.reduce((sum, file) => sum + (file.stat?.deletions ?? 0), 0);
-        return { nodes, summary: `${branch} → ${base}  +${additions} −${deletions}` };
+        return { nodes, summary: `${branch} → ${base.name}  +${additions} −${deletions}` };
     }
 
     private async collectFiles(root: string, mergeBaseRef: string): Promise<ChangedFile[]> {
