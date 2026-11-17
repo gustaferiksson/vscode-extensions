@@ -93,10 +93,11 @@ export class DiffStripes {
         if (file.status === 'D') return NO_STRIPES;
 
         const lastLine = document.lineCount - (document.lineAt(document.lineCount - 1).text === '' ? 1 : 0);
-        const untracked = (await untrackedFiles(root, [file.path])).length > 0;
-        const local: readonly [number, number][] = untracked
-            ? [[1, Math.max(lastLine, 1)]]
-            : (await changedLines(root, 'HEAD', paths)).added;
+        const [untracked, head] = await Promise.all([
+            untrackedFiles(root, [file.path]),
+            changedLines(root, 'HEAD', paths),
+        ]);
+        const local: readonly [number, number][] = untracked.length > 0 ? [[1, Math.max(lastLine, 1)]] : head.added;
 
         const committed: [number, number][] = [];
         for (const [start, end] of branch.added) {

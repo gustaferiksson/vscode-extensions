@@ -66,27 +66,29 @@ export async function listBranches(root: string): Promise<{ local: string[]; rem
 export type BaseRef = { readonly ref: string; readonly name: string; readonly remote?: string };
 
 export async function resolveBase(root: string, branch: string, configured: string): Promise<BaseRef | null> {
-    const upstream = (
-        await tryGit(root, ['for-each-ref', '--format=%(upstream:remotename)', `refs/heads/${branch}`])
-    )?.trim();
+    const upstreamOut = await tryGit(root, ['for-each-ref', '--format=%(upstream:remotename)', `refs/heads/${branch}`]);
+    const upstream = upstreamOut?.trim();
     const remote = upstream && upstream !== '.' ? upstream : 'origin';
-    const remoteHead = (await tryGit(root, ['symbolic-ref', '--short', `refs/remotes/${remote}/HEAD`]))?.trim();
+    const remoteHeadOut = await tryGit(root, ['symbolic-ref', '--short', `refs/remotes/${remote}/HEAD`]);
+    const remoteHead = remoteHeadOut?.trim();
     const name = configured.trim();
 
-    const candidates: BaseRef[] = [
-        ...(name
-            ? [
-                  { ref: `refs/remotes/${name}`, name, remote: name.split('/')[0] },
-                  { ref: `refs/remotes/${remote}/${name}`, name: `${remote}/${name}`, remote },
-                  { ref: `refs/heads/${name}`, name },
-              ]
-            : []),
-        ...(remoteHead ? [{ ref: `refs/remotes/${remoteHead}`, name: remoteHead, remote }] : []),
+    const candidates: BaseRef[] = [];
+    if (name) {
+        candidates.push(
+            { ref: `refs/remotes/${name}`, name, remote: name.split('/')[0] },
+            { ref: `refs/remotes/${remote}/${name}`, name: `${remote}/${name}`, remote },
+            { ref: `refs/heads/${name}`, name }
+        );
+    }
+    if (remoteHead) candidates.push({ ref: `refs/remotes/${remoteHead}`, name: remoteHead, remote });
+    candidates.push(
         { ref: `refs/remotes/${remote}/main`, name: `${remote}/main`, remote },
         { ref: `refs/remotes/${remote}/master`, name: `${remote}/master`, remote },
         { ref: 'refs/heads/main', name: 'main' },
-        { ref: 'refs/heads/master', name: 'master' },
-    ];
+        { ref: 'refs/heads/master', name: 'master' }
+    );
+
     for (const candidate of candidates) {
         const found = await tryGit(root, ['rev-parse', '--verify', '--quiet', candidate.ref]);
         if (found) return candidate;
@@ -97,10 +99,10 @@ export async function resolveBase(root: string, branch: string, configured: stri
 export async function fetchRemote(root: string, base: BaseRef): Promise<boolean> {
     if (!base.remote) return false;
     const branch = base.name.slice(base.remote.length + 1);
-    return (
-        (await tryGit(root, ['fetch', '--quiet', '--no-tags', base.remote, branch], { timeout: FETCH_TIMEOUT_MS })) !==
-        null
-    );
+    const out = await tryGit(root, ['fetch', '--quiet', '--no-tags', base.remote, branch], {
+        timeout: FETCH_TIMEOUT_MS,
+    });
+    return out !== null;
 }
 
 /** The checked-out branch name, or `null` when HEAD is detached. */

@@ -41,7 +41,10 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<TreeNo
     }
 
     async getChildren(node?: TreeNode): Promise<TreeNode[]> {
-        if (node?.kind === 'repo') return (await this.changes(node.root)).nodes;
+        if (node?.kind === 'repo') {
+            const changes = await this.changes(node.root);
+            return changes.nodes;
+        }
         if (node?.kind === 'dir') return [...node.children];
         if (node) return [];
 
@@ -76,7 +79,8 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<TreeNo
         try {
             const branch = await currentBranch(root);
             const base = branch ? await resolveBase(root, branch, this.baseBranch()) : null;
-            if (base && (await fetchRemote(root, base))) this.refresh();
+            const fetched = base ? await fetchRemote(root, base) : false;
+            if (fetched) this.refresh();
         } finally {
             this.fetching.delete(root);
         }
