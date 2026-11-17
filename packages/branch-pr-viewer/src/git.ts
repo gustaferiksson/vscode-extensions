@@ -6,25 +6,15 @@ const execFileAsync = promisify(execFile);
 /** Generous ceiling so large diffs and file contents don't overflow the pipe. */
 const MAX_BUFFER = 128 * 1024 * 1024;
 
-export type BranchInfo = {
-    readonly name: string;
-    /** Commit SHA at the branch tip — used as an immutable ref for content lookups. */
-    readonly tip: string;
-    /** Last-commit time, epoch milliseconds. */
-    readonly committedAt: number;
-};
-
 export type FileStatus = 'A' | 'M' | 'D' | 'R' | 'C' | 'T' | 'U';
 
 export type ChangedFile = {
     readonly status: FileStatus;
-    /** The file's path on the branch side (the deleted path for `D`). */
+    /** The file's path on the working-tree side (the deleted path for `D`). */
     readonly path: string;
     /** Original path for renames/copies. */
     readonly oldPath?: string;
 };
-
-export type DiffStat = { readonly additions: number; readonly deletions: number };
 
 /** Runs git in `root`, resolving to trimmed stdout. Rejects with stderr on failure. */
 async function runGit(root: string, args: readonly string[]): Promise<string> {
@@ -51,23 +41,9 @@ export async function discoverRepoRoot(folder: string): Promise<string | null> {
     return out ? out.trim() : null;
 }
 
-/** Local branches, newest commit first. */
-export async function listBranches(root: string): Promise<BranchInfo[]> {
-    const out = await runGit(root, [
-        'for-each-ref',
-        '--sort=-committerdate',
-        'refs/heads',
-        '--format=%(refname:short)%09%(objectname)%09%(committerdate:unix)',
-    ]);
-
-    const branches: BranchInfo[] = [];
-    for (const line of out.split('\n')) {
-        if (!line) continue;
-        const [name, tip, unix] = line.split('\t');
-        if (!name || !tip || !unix) continue;
-        branches.push({ name, tip, committedAt: Number(unix) * 1000 });
-    }
-    return branches;
+export async function listBranches(root: string): Promise<string[]> {
+    const out = await runGit(root, ['for-each-ref', 'refs/heads', '--format=%(refname:short)']);
+    return out.split('\n').filter(Boolean);
 }
 
 /**
@@ -111,12 +87,11 @@ function toStatus(code: string): FileStatus {
 }
 
 /**
- * Files that differ between `from` and `to`, with rename/copy detection.
+ * Files that differ between `from` and the working tree, with rename/copy detection.
  * Uses NUL-delimited output so paths with spaces or unusual characters are safe.
  */
-export async function changedFiles(root: string, from: string, to?: string): Promise<ChangedFile[]> {
-    const revs = to === undefined ? [from] : [from, to];
-    const out = await runGit(root, ['diff', '--name-status', '--find-renames', '-z', ...revs]);
+export async function changedFiles(root: string, from: string): Promise<ChangedFile[]> {
+    const out = await runGit(root, ['diff', '--name-status', '--find-renames', '-z', from]);
     const parts = out.split('\0');
 
     const files: ChangedFile[] = [];
@@ -146,42 +121,16 @@ export async function changedFiles(root: string, from: string, to?: string): Pro
     return files;
 }
 
-/**
- * Total additions/deletions for a diff; binary files count as zero. `revs` is
- * passed straight to `git diff`, so a single `base...branch` gives three-dot
- * (merge-base) totals, matching a GitHub PR's counts.
- */
-export async function diffStat(root: string, ...revs: string[]): Promise<DiffStat> {
-    const out = await tryGit(root, ['diff', '--numstat', ...revs]);
-    if (!out) return { additions: 0, deletions: 0 };
-
-    let additions = 0;
-    let deletions = 0;
-    for (const line of out.split('\n')) {
-        if (!line) continue;
-        const [add, del] = line.split('\t');
-        if (add && add !== '-') additions += Number(add);
-        if (del && del !== '-') deletions += Number(del);
-    }
-    return { additions, deletions };
-}
-
 export type LineRanges = { readonly added: readonly [number, number][]; readonly removed: readonly [number, number][] };
 
 const HUNK = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
 
 /**
  * Changed line ranges (1-based, inclusive) for one file: `removed` on the `from`
- * side, `added` on the `to` side — the working tree when `to` is omitted.
+ * side, `added` on the working-tree side.
  */
-export async function changedLines(
-    root: string,
-    from: string,
-    paths: readonly string[],
-    to?: string
-): Promise<LineRanges> {
-    const revs = to === undefined ? [from] : [from, to];
-    const out = await tryGit(root, ['diff', '-U0', '--find-renames', ...revs, '--', ...paths]);
+export async function changedLines(root: string, from: string, paths: readonly string[]): Promise<LineRanges> {
+    const out = await tryGit(root, ['diff', '-U0', '--find-renames', from, '--', ...paths]);
     if (!out) return { added: [], removed: [] };
 
     const added: [number, number][] = [];

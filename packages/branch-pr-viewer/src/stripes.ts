@@ -69,10 +69,9 @@ export class DiffStripes {
     }
 
     private async decorate(editor: vscode.TextEditor, { node, side }: Tracked): Promise<void> {
-        const { file, root, mergeBaseRef, right } = node;
+        const { file, root, mergeBaseRef } = node;
         const paths = file.oldPath ? [file.oldPath, file.path] : [file.path];
-        const to = right.kind === 'ref' ? right.ref : undefined;
-        const lines = await changedLines(root, mergeBaseRef, paths, to);
+        const lines = await changedLines(root, mergeBaseRef, paths);
 
         editor.setDecorations(this.added, side === 'right' ? toRanges(lines.added) : []);
         editor.setDecorations(this.removed, side === 'left' ? toRanges(lines.removed) : []);

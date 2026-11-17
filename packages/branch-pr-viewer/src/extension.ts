@@ -4,13 +4,12 @@ import { applyDiffStyle, toggleDiffStyle } from './diffStyle';
 import { discoverRepoRoot, listBranches } from './git';
 import { registerProviders } from './providers';
 import { DiffStripes } from './stripes';
-import { BranchTreeProvider, openFile, openFileDiff, type TreeNode } from './tree';
+import { openFile, openFileDiff, type TreeNode } from './tree';
 
 /** The slice of the built-in Git extension API we rely on for repo discovery. */
 type GitRepository = {
     readonly rootUri: vscode.Uri;
     readonly state: {
-        readonly HEAD?: { readonly name?: string; readonly commit?: string };
         readonly onDidChange: vscode.Event<unknown>;
     };
 };
@@ -36,38 +35,22 @@ async function getGitApi(): Promise<GitAPI | undefined> {
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
     const roots = new Set<string>();
     const sortedRoots = (): string[] => [...roots].sort((a, b) => a.localeCompare(b));
-    const tree = new BranchTreeProvider(sortedRoots);
     const current = new CurrentBranchTreeProvider(sortedRoots);
     const stripes = new DiffStripes();
     const refreshStripes = (): void => void stripes.refresh();
 
     let api: GitAPI | undefined;
 
-    const refreshAll = (): void => {
-        tree.refresh();
-        current.refresh();
-    };
+    const refreshAll = (): void => current.refresh();
     const refreshCurrentSoon = debounce(() => {
         current.refresh();
         refreshStripes();
     }, 200);
-    const refreshBranchesSoon = debounce(() => tree.refresh(), 200);
-
-    const lastHead = new Map<string, string>();
-    const onRepoState = (repo: GitRepository): void => {
-        const root = repo.rootUri.fsPath;
-        const head = `${repo.state.HEAD?.name ?? ''}\0${repo.state.HEAD?.commit ?? ''}`;
-        if (lastHead.get(root) !== head) {
-            lastHead.set(root, head);
-            refreshBranchesSoon();
-        }
-        refreshCurrentSoon();
-    };
 
     let repoStates: vscode.Disposable[] = [];
     const watchRepoStates = (): void => {
         for (const watcher of repoStates) watcher.dispose();
-        repoStates = (api?.repositories ?? []).map((repo) => repo.state.onDidChange(() => onRepoState(repo)));
+        repoStates = (api?.repositories ?? []).map((repo) => repo.state.onDidChange(refreshCurrentSoon));
     };
 
     const refreshRoots = async (): Promise<void> => {
@@ -86,13 +69,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     };
 
     context.subscriptions.push(
-        tree,
         current,
         stripes,
         new vscode.Disposable(() => {
             for (const watcher of repoStates) watcher.dispose();
         }),
-        vscode.window.registerTreeDataProvider('branchPrViewer.branches', tree),
         vscode.window.registerTreeDataProvider('branchPrViewer.currentChanges', current),
         ...registerProviders(),
         vscode.commands.registerCommand('branchPrViewer.refresh', refreshAll),
@@ -134,7 +115,7 @@ async function selectBase(getRoots: () => string[]): Promise<void> {
     const names = new Set<string>();
     for (const root of getRoots()) {
         try {
-            for (const branch of await listBranches(root)) names.add(branch.name);
+            for (const name of await listBranches(root)) names.add(name);
         } catch {
             // Skip repos that fail to enumerate.
         }

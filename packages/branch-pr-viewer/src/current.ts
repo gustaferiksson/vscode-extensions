@@ -1,23 +1,13 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { type ChangedFile, changedFiles, currentBranch, mergeBase, resolveBase, untrackedFiles } from './git';
-import {
-    buildFileTree,
-    type DirNode,
-    type FileNode,
-    type MessageNode,
-    messageNode,
-    nodeTreeItem,
-    type RepoNode,
-} from './tree';
+import { buildFileTree, messageNode, nodeTreeItem, type RepoNode, type TreeNode } from './tree';
 
-type ChangeNode = RepoNode | DirNode | FileNode | MessageNode;
-
-export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<ChangeNode> {
-    private readonly emitter = new vscode.EventEmitter<ChangeNode | undefined>();
+export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<TreeNode> {
+    private readonly emitter = new vscode.EventEmitter<TreeNode | undefined>();
     readonly onDidChangeTreeData = this.emitter.event;
 
-    private readonly cache = new Map<string, ChangeNode[]>();
+    private readonly cache = new Map<string, TreeNode[]>();
 
     constructor(private readonly repoRoots: () => string[]) {}
 
@@ -30,11 +20,11 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<Change
         this.emitter.dispose();
     }
 
-    getTreeItem(node: ChangeNode): vscode.TreeItem {
+    getTreeItem(node: TreeNode): vscode.TreeItem {
         return nodeTreeItem(node);
     }
 
-    getChildren(node?: ChangeNode): vscode.ProviderResult<ChangeNode[]> {
+    getChildren(node?: TreeNode): vscode.ProviderResult<TreeNode[]> {
         if (!node) {
             const roots = this.repoRoots();
             if (roots.length === 0) return [];
@@ -46,7 +36,7 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<Change
         return [];
     }
 
-    private async changeNodes(root: string): Promise<ChangeNode[]> {
+    private async changeNodes(root: string): Promise<TreeNode[]> {
         const cached = this.cache.get(root);
         if (cached) return cached;
 
@@ -55,7 +45,7 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<Change
         return nodes;
     }
 
-    private async computeChangeNodes(root: string): Promise<ChangeNode[]> {
+    private async computeChangeNodes(root: string): Promise<TreeNode[]> {
         const parentId = `repo:${root}`;
         const branch = await currentBranch(root);
         if (!branch) return [messageNode(parentId, 'HEAD is detached — check out a branch to see its changes.')];
@@ -80,7 +70,6 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<Change
             base,
             branchName: branch,
             mergeBaseRef,
-            right: { kind: 'worktree' },
         });
     }
 

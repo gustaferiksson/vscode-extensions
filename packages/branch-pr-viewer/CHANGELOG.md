@@ -2,6 +2,10 @@
 
 All notable changes to the **Branch PR Viewer** extension are documented here.
 
+## [Unreleased]
+
+- Removed the **Branch PR Viewer** branch-list view; **Current Branch Changes** is now the extension's only view.
+
 ## [0.0.7]
 
 - Toggling the diff style with several windows open no longer corrupts `settings.json`: only the focused window writes the colour overrides.

@@ -7,7 +7,7 @@ Monorepo for Gustaf Eriksson's VS Code extensions, managed with [Bun](https://bu
 | Package | Marketplace | Description |
 | --- | --- | --- |
 | [`packages/diff-files`](packages/diff-files) | [`gustaferiksson.diff-files`](https://marketplace.visualstudio.com/items?itemName=gustaferiksson.diff-files) | Diff the active file against any open, unsaved, or workspace file. |
-| [`packages/branch-pr-viewer`](packages/branch-pr-viewer) | [`gustaferiksson.branch-pr-viewer`](https://marketplace.visualstudio.com/items?itemName=gustaferiksson.branch-pr-viewer) | Browse local branches newest-first and review their changed files like a GitHub PR. |
+| [`packages/branch-pr-viewer`](packages/branch-pr-viewer) | [`gustaferiksson.branch-pr-viewer`](https://marketplace.visualstudio.com/items?itemName=gustaferiksson.branch-pr-viewer) | Review the checked-out branch's changes against its base like a GitHub PR. |
 | [`packages/workspace-explorer`](packages/workspace-explorer) | [`gustaferiksson.multi-repo-workspace-explorer`](https://marketplace.visualstudio.com/items?itemName=gustaferiksson.multi-repo-workspace-explorer) | Manage git repositories in your workspace with a repository browser. |
 
 ## Develop

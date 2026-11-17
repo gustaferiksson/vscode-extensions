@@ -1,7 +1,7 @@
 {
     "name": "branch-pr-viewer",
     "displayName": "Branch PR Viewer",
-    "description": "Browse local branches newest-first and review their changed files like a GitHub PR — native diff, no remote required.",
+    "description": "Review the checked-out branch's changes against its base like a GitHub PR's \"Files changed\", with native, editable diffs.",
     "version": "0.0.7",
     "publisher": "gustaferiksson",
     "author": "Gustaf Eriksson",
@@ -32,11 +32,6 @@
         "viewsContainers": {
             "activitybar": [
                 {
-                    "id": "branchPrViewer",
-                    "title": "Branch PR Viewer",
-                    "icon": "media/branch.svg"
-                },
-                {
                     "id": "branchPrViewerCurrent",
                     "title": "Current Branch Changes",
                     "icon": "media/pull-request.svg"
@@ -44,13 +39,6 @@
             ]
         },
         "views": {
-            "branchPrViewer": [
-                {
-                    "id": "branchPrViewer.branches",
-                    "name": "Branches",
-                    "contextualTitle": "Branch PR Viewer"
-                }
-            ],
             "branchPrViewerCurrent": [
                 {
                     "id": "branchPrViewer.currentChanges",
@@ -60,10 +48,6 @@
             ]
         },
         "viewsWelcome": [
-            {
-                "view": "branchPrViewer.branches",
-                "contents": "No Git repository was found in this workspace.\nOpen a folder that is under version control to browse its branches."
-            },
             {
                 "view": "branchPrViewer.currentChanges",
                 "contents": "No Git repository was found in this workspace.\nOpen a folder that is under version control to review the current branch's changes."
@@ -104,16 +88,6 @@
             "view/title": [
                 {
                     "command": "branchPrViewer.selectBase",
-                    "when": "view == branchPrViewer.branches",
-                    "group": "navigation@1"
-                },
-                {
-                    "command": "branchPrViewer.refresh",
-                    "when": "view == branchPrViewer.branches",
-                    "group": "navigation@2"
-                },
-                {
-                    "command": "branchPrViewer.selectBase",
                     "when": "view == branchPrViewer.currentChanges",
                     "group": "navigation@1"
                 },
@@ -121,11 +95,6 @@
                     "command": "branchPrViewer.refresh",
                     "when": "view == branchPrViewer.currentChanges",
                     "group": "navigation@2"
-                },
-                {
-                    "command": "branchPrViewer.toggleDiffStyle",
-                    "when": "view == branchPrViewer.branches",
-                    "group": "navigation@3"
                 },
                 {
                     "command": "branchPrViewer.toggleDiffStyle",
@@ -144,11 +113,6 @@
                 }
             ],
             "view/item/context": [
-                {
-                    "command": "branchPrViewer.openFile",
-                    "when": "view == branchPrViewer.branches && viewItem == file",
-                    "group": "inline"
-                },
                 {
                     "command": "branchPrViewer.openFile",
                     "when": "view == branchPrViewer.currentChanges && viewItem == file",
