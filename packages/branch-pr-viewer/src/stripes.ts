@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { changedLines, untrackedFiles } from './git';
+import { changedLines, type LineRanges, untrackedFiles } from './git';
+import { CONTENT_SCHEME } from './providers';
 import type { FileNode } from './tree';
 
 const ADDED = '#3fb950';
@@ -24,7 +25,9 @@ function toRanges(ranges: readonly [number, number][]): vscode.Range[] {
 }
 
 type Side = 'left' | 'right';
-type Tracked = { readonly node: FileNode; readonly side: Side };
+type Stripes = LineRanges & { readonly local: readonly [number, number][] };
+
+const NO_STRIPES: Stripes = { added: [], removed: [], local: [] };
 
 /**
  * Paints changed lines as a thin gutter stripe in the diffs this extension
@@ -36,7 +39,8 @@ export class DiffStripes {
     private readonly added = stripeType(ADDED);
     private readonly removed = stripeType(REMOVED);
     private readonly local = stripeType(LOCAL);
-    private readonly tracked = new Map<string, Tracked>();
+    private readonly tracked = new Map<string, FileNode>();
+    private generation = 0;
 
     dispose(): void {
         this.added.dispose();
@@ -45,8 +49,8 @@ export class DiffStripes {
     }
 
     track(left: vscode.Uri, right: vscode.Uri, node: FileNode): void {
-        this.tracked.set(left.toString(), { node, side: 'left' });
-        this.tracked.set(right.toString(), { node, side: 'right' });
+        this.tracked.set(left.toString(), node);
+        this.tracked.set(right.toString(), node);
     }
 
     tracks(uri: vscode.Uri): boolean {
@@ -54,25 +58,39 @@ export class DiffStripes {
     }
 
     async refresh(): Promise<void> {
+        this.generation += 1;
+        const generation = this.generation;
+
         for (const editor of vscode.window.visibleTextEditors) {
-            const tracked = this.tracked.get(editor.document.uri.toString());
-            if (tracked) await this.decorate(editor, tracked);
+            const uri = editor.document.uri.toString();
+            const node = this.tracked.get(uri);
+            if (!node) continue;
+
+            const tab = vscode.window.tabGroups.all.find((group) => group.viewColumn === editor.viewColumn)?.activeTab;
+            const diff =
+                tab?.input instanceof vscode.TabInputTextDiff && tab.input.original.scheme === CONTENT_SCHEME
+                    ? tab.input
+                    : undefined;
+            const side: Side | undefined =
+                diff?.original.toString() === uri ? 'left' : diff?.modified.toString() === uri ? 'right' : undefined;
+            const stripes = side ? await this.stripes(node, side, editor.document) : NO_STRIPES;
+            if (generation !== this.generation) return;
+
+            editor.setDecorations(this.added, toRanges(stripes.added));
+            editor.setDecorations(this.removed, toRanges(stripes.removed));
+            editor.setDecorations(this.local, toRanges(stripes.local));
         }
     }
 
-    private async decorate(editor: vscode.TextEditor, { node, side }: Tracked): Promise<void> {
+    private async stripes(node: FileNode, side: Side, document: vscode.TextDocument): Promise<Stripes> {
         const { file, root, mergeBaseRef } = node;
         const paths = file.oldPath ? [file.oldPath, file.path] : [file.path];
         const gutter = vscode.workspace.getConfiguration('branchPrViewer').get<string>('diffStyle') === 'gutter';
-        const branch = gutter ? await changedLines(root, mergeBaseRef, paths) : { added: [], removed: [] };
+        const branch = gutter ? await changedLines(root, mergeBaseRef, paths) : NO_STRIPES;
 
-        if (side === 'left') {
-            editor.setDecorations(this.removed, toRanges(branch.removed));
-            return;
-        }
-        if (file.status === 'D') return;
+        if (side === 'left') return { ...NO_STRIPES, removed: branch.removed };
+        if (file.status === 'D') return NO_STRIPES;
 
-        const { document } = editor;
         const lastLine = document.lineCount - (document.lineAt(document.lineCount - 1).text === '' ? 1 : 0);
         const untracked = (await untrackedFiles(root, [file.path])).length > 0;
         const local: readonly [number, number][] = untracked
@@ -90,7 +108,6 @@ export class DiffStripes {
             if (next <= end) committed.push([next, end]);
         }
 
-        editor.setDecorations(this.added, toRanges(committed));
-        editor.setDecorations(this.local, toRanges(local));
+        return { added: committed, removed: [], local };
     }
 }

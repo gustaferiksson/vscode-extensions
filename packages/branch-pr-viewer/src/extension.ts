@@ -79,6 +79,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         vscode.commands.registerCommand('branchPrViewer.openDiff', (node?: TreeNode) => openFileDiff(stripes, node)),
         vscode.commands.registerCommand('branchPrViewer.openFile', openFile),
         vscode.window.onDidChangeVisibleTextEditors(refreshStripes),
+        vscode.window.tabGroups.onDidChangeTabs(refreshStripes),
         vscode.workspace.onDidSaveTextDocument((document) => {
             if (stripes.tracks(document.uri)) refreshStripes();
         }),
