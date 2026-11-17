@@ -11,7 +11,7 @@ import {
     untrackedFiles,
     untrackedStats,
 } from './git';
-import { buildFileTree, messageNode, nodeTreeItem, type RepoNode, type TreeNode } from './tree';
+import { buildFileTree, type FileNode, messageNode, nodeTreeItem, type RepoNode, type TreeNode } from './tree';
 
 type RepoChanges = { readonly nodes: TreeNode[]; readonly summary?: string };
 
@@ -93,12 +93,24 @@ export class CurrentBranchTreeProvider implements vscode.TreeDataProvider<TreeNo
         }
         if (files.length === 0) return { nodes: [messageNode(parentId, `No changes vs ${base}.`)] };
 
+        const ctx = { root, base, branchName: branch, mergeBaseRef };
+        const listed = vscode.workspace.getConfiguration('branchPrViewer').get<string>('viewMode', 'tree') === 'list';
+        const nodes = listed
+            ? [...files]
+                  .sort((a, b) => a.path.localeCompare(b.path))
+                  .map(
+                      (file): FileNode => ({
+                          kind: 'file',
+                          ...ctx,
+                          file,
+                          dir: file.path.includes('/') ? path.posix.dirname(file.path) : undefined,
+                      })
+                  )
+            : buildFileTree(files, ctx);
+
         const additions = files.reduce((sum, file) => sum + (file.stat?.additions ?? 0), 0);
         const deletions = files.reduce((sum, file) => sum + (file.stat?.deletions ?? 0), 0);
-        return {
-            nodes: buildFileTree(files, { root, base, branchName: branch, mergeBaseRef }),
-            summary: `${branch} → ${base}  +${additions} −${deletions}`,
-        };
+        return { nodes, summary: `${branch} → ${base}  +${additions} −${deletions}` };
     }
 
     private async collectFiles(root: string, mergeBaseRef: string): Promise<ChangedFile[]> {

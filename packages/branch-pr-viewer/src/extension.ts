@@ -83,9 +83,24 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             if (stripes.tracks(document.uri)) refreshStripes();
         }),
         vscode.commands.registerCommand('branchPrViewer.toggleDiffStyle', toggleDiffStyle),
+        vscode.commands.registerCommand('branchPrViewer.viewAsList', () =>
+            vscode.workspace
+                .getConfiguration('branchPrViewer')
+                .update('viewMode', 'list', vscode.ConfigurationTarget.Global)
+        ),
+        vscode.commands.registerCommand('branchPrViewer.viewAsTree', () =>
+            vscode.workspace
+                .getConfiguration('branchPrViewer')
+                .update('viewMode', 'tree', vscode.ConfigurationTarget.Global)
+        ),
         vscode.commands.registerCommand('branchPrViewer.selectBase', () => selectBase(() => [...roots])),
         vscode.workspace.onDidChangeConfiguration((event) => {
-            if (event.affectsConfiguration('branchPrViewer.baseBranch')) refreshAll();
+            if (
+                event.affectsConfiguration('branchPrViewer.baseBranch') ||
+                event.affectsConfiguration('branchPrViewer.viewMode')
+            ) {
+                refreshAll();
+            }
             if (event.affectsConfiguration('branchPrViewer.diffStyle')) {
                 void applyDiffStyle();
                 refreshStripes();

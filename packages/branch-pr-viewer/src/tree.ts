@@ -28,6 +28,7 @@ export type FileNode = {
     readonly branchName: string;
     readonly mergeBaseRef: string;
     readonly file: ChangedFile;
+    readonly dir?: string;
 };
 
 export type MessageNode = { readonly kind: 'message'; readonly text: string; readonly parentId: string };
@@ -130,7 +131,7 @@ function fileTreeItem(node: FileNode): vscode.TreeItem {
     item.tooltip = node.file.oldPath
         ? `${node.file.oldPath} → ${displayPath} (${STATUS_LABEL[node.file.status]})`
         : `${displayPath} (${STATUS_LABEL[node.file.status]})`;
-    item.description = [stat && `+${stat.additions} −${stat.deletions}`, node.file.uncommitted && '●']
+    item.description = [node.dir, stat && `+${stat.additions} −${stat.deletions}`, node.file.uncommitted && '●']
         .filter(Boolean)
         .join(' ');
     item.contextValue = 'file';

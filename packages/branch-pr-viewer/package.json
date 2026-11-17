@@ -82,6 +82,18 @@
                 "title": "Open File",
                 "category": "Branch PR Viewer",
                 "icon": "$(go-to-file)"
+            },
+            {
+                "command": "branchPrViewer.viewAsList",
+                "title": "View as List",
+                "category": "Branch PR Viewer",
+                "icon": "$(list-flat)"
+            },
+            {
+                "command": "branchPrViewer.viewAsTree",
+                "title": "View as Tree",
+                "category": "Branch PR Viewer",
+                "icon": "$(list-tree)"
             }
         ],
         "menus": {
@@ -100,6 +112,16 @@
                     "command": "branchPrViewer.toggleDiffStyle",
                     "when": "view == branchPrViewer.currentChanges",
                     "group": "navigation@3"
+                },
+                {
+                    "command": "branchPrViewer.viewAsList",
+                    "when": "view == branchPrViewer.currentChanges && config.branchPrViewer.viewMode == tree",
+                    "group": "navigation@4"
+                },
+                {
+                    "command": "branchPrViewer.viewAsTree",
+                    "when": "view == branchPrViewer.currentChanges && config.branchPrViewer.viewMode == list",
+                    "group": "navigation@4"
                 }
             ],
             "commandPalette": [
@@ -127,6 +149,19 @@
                     "type": "string",
                     "default": "",
                     "markdownDescription": "Branch to compare against, using three-dot (merge-base) diff like a GitHub PR. When empty, the base is detected automatically: `main`, then `master`."
+                },
+                "branchPrViewer.viewMode": {
+                    "type": "string",
+                    "enum": [
+                        "tree",
+                        "list"
+                    ],
+                    "enumDescriptions": [
+                        "Group changed files into folders.",
+                        "List changed files flat, sorted by path, with each file's folder beside its name."
+                    ],
+                    "default": "tree",
+                    "markdownDescription": "How the **Current Branch Changes** view lays out changed files."
                 },
                 "branchPrViewer.diffStyle": {
                     "type": "string",

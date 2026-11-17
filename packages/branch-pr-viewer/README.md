@@ -13,6 +13,7 @@ Open the **Current Branch Changes** view from the Activity Bar.
 - Files are badged **A / M / D / R** (added, modified, deleted, renamed) just like the Source Control view.
 - Each file shows its `+added −deleted` line counts against the merge base (none for binary files), and a **●** when it has uncommitted changes (differs from `HEAD`, or is untracked).
 - The view title shows `branch → base` with the total line counts; with several repositories, each repository row shows its own.
+- **View as List** / **View as Tree** in the view title switches between the folder tree and a flat list sorted by path, with each file's folder shown beside its name.
 - The tree updates itself as you commit, check out branches or edit files.
 
 ## Diff highlight style
@@ -42,6 +43,7 @@ Open several repositories at once (e.g. a monorepo split, or `api` + `web` side 
 | Setting | Default | Description |
 | --- | --- | --- |
 | `branchPrViewer.baseBranch` | `""` | Branch to compare against with three-dot (merge-base) diff. When empty, the base is auto-detected: `main`, then `master`. |
+| `branchPrViewer.viewMode` | `"tree"` | `tree` groups changed files into folders; `list` shows them flat, sorted by path. |
 | `branchPrViewer.diffStyle` | `"theme"` | `theme` leaves diff colours to the theme; `gutter` hides line backgrounds and marks changes in the gutter. |
 
 ## Commands
@@ -51,6 +53,7 @@ Open several repositories at once (e.g. a monorepo split, or `api` + `web` side 
 | **Branch PR Viewer: Refresh** | Reload the changed files (title-bar refresh icon). |
 | **Branch PR Viewer: Select Base Branch…** | Pick the base branch to compare against. |
 | **Branch PR Viewer: Open File** | Open the file itself (hover a file row) instead of its diff. |
+| **Branch PR Viewer: View as List** / **View as Tree** | Switch the view between a flat file list and a folder tree. |
 | **Branch PR Viewer: Toggle Diff Highlight Style** | Switch between theme diff colours and green/red gutter marks. |
 
 ## Notes
