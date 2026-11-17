@@ -2,7 +2,7 @@
     "name": "branch-pr-viewer",
     "displayName": "Branch PR Viewer",
     "description": "Review the checked-out branch's changes against its base like a GitHub PR's \"Files changed\", with native, editable diffs.",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "publisher": "gustaferiksson",
     "author": "Gustaf Eriksson",
     "license": "MIT",

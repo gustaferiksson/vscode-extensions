@@ -2,7 +2,7 @@
 
 All notable changes to the **Branch PR Viewer** extension are documented here.
 
-## [Unreleased]
+## [0.0.8]
 
 - Removed the **Branch PR Viewer** branch-list view; **Current Branch Changes** is now the extension's only view.
 - File rows show `+added −deleted` line counts against the merge base, and a **●** when the file has uncommitted changes.
