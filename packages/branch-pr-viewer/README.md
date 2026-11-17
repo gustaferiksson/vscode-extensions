@@ -50,7 +50,7 @@ The base is resolved on the remote first, so you never have to update your local
 
 Set a specific base with the **Select Base Branch…** button in the view title (it lists local and remote-tracking branches), or via the `branchPrViewer.baseBranch` setting. A bare name such as `develop` uses `origin/develop` when it exists, otherwise the local branch; a name such as `upstream/main` is used as is.
 
-When the base is a remote branch, it is fetched quietly in the background (`git fetch <remote> <branch>`) when the view loads and whenever you press **Refresh**; a failed fetch is ignored. The view title shows the resolved base, e.g. `feature → origin/main`.
+When the base is a remote branch, it is fetched quietly in the background (`git fetch <remote> <branch>`) when the view loads and whenever you press **Refresh**; a fetch that fails or takes longer than 30 seconds is ignored. The view title shows the resolved base, e.g. `feature → origin/main`.
 
 Checked out on the base branch itself (say `main`, with base `origin/main`), the view shows your unpushed commits plus uncommitted work.
 

@@ -11,7 +11,7 @@ All notable changes to the **Branch PR Viewer** extension are documented here.
 - Diffs mark local (uncommitted) lines on the right with a blue gutter stripe in both diff styles; in `gutter` style, green now means committed branch changes only.
 - Gutter stripes are drawn only in diffs opened from this view, never in a plain editor or another diff of the same file.
 - The base is resolved on the remote first (the branch's upstream remote, else `origin`): its default branch, then `main`/`master` on the remote, then local `main`/`master`. A bare `baseBranch` name prefers its remote-tracking branch.
-- A remote base is fetched quietly in the background when the view loads and on **Refresh**, so local `main` never needs updating first.
+- A remote base is fetched quietly in the background (30-second timeout) when the view loads and on **Refresh**, so local `main` never needs updating first.
 - On the base branch itself (e.g. `main` vs `origin/main`), the view now shows unpushed and uncommitted changes instead of "nothing to compare".
 - **Select Base Branch…** lists remote-tracking branches after the local ones.
 

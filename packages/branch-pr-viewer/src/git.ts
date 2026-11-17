@@ -23,9 +23,14 @@ export type ChangedFile = {
 
 export type DiffStat = { readonly additions: number; readonly deletions: number };
 
+type GitOptions = { readonly timeout?: number };
+
+const FETCH_TIMEOUT_MS = 30_000;
+
 /** Runs git in `root`, resolving to trimmed stdout. Rejects with stderr on failure. */
-async function runGit(root: string, args: readonly string[]): Promise<string> {
+async function runGit(root: string, args: readonly string[], options: GitOptions = {}): Promise<string> {
     const { stdout } = await execFileAsync('git', args as string[], {
+        ...options,
         cwd: root,
         encoding: 'utf8',
         maxBuffer: MAX_BUFFER,
@@ -35,9 +40,9 @@ async function runGit(root: string, args: readonly string[]): Promise<string> {
 }
 
 /** Like {@link runGit} but resolves to `null` instead of rejecting — for existence probes. */
-async function tryGit(root: string, args: readonly string[]): Promise<string | null> {
+async function tryGit(root: string, args: readonly string[], options: GitOptions = {}): Promise<string | null> {
     try {
-        return await runGit(root, args);
+        return await runGit(root, args, options);
     } catch {
         return null;
     }
@@ -92,7 +97,10 @@ export async function resolveBase(root: string, branch: string, configured: stri
 export async function fetchRemote(root: string, base: BaseRef): Promise<boolean> {
     if (!base.remote) return false;
     const branch = base.name.slice(base.remote.length + 1);
-    return (await tryGit(root, ['fetch', '--quiet', '--no-tags', base.remote, branch])) !== null;
+    return (
+        (await tryGit(root, ['fetch', '--quiet', '--no-tags', base.remote, branch], { timeout: FETCH_TIMEOUT_MS })) !==
+        null
+    );
 }
 
 /** The checked-out branch name, or `null` when HEAD is detached. */
