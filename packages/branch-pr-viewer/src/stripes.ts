@@ -60,19 +60,20 @@ export class DiffStripes {
     async refresh(): Promise<void> {
         this.generation += 1;
         const generation = this.generation;
+        const diffs = vscode.window.tabGroups.all.flatMap((group) => {
+            const input = group.activeTab?.input;
+            return input instanceof vscode.TabInputTextDiff && input.original.scheme === CONTENT_SCHEME ? [input] : [];
+        });
 
         for (const editor of vscode.window.visibleTextEditors) {
             const uri = editor.document.uri.toString();
             const node = this.tracked.get(uri);
             if (!node) continue;
 
-            const tab = vscode.window.tabGroups.all.find((group) => group.viewColumn === editor.viewColumn)?.activeTab;
-            const diff =
-                tab?.input instanceof vscode.TabInputTextDiff && tab.input.original.scheme === CONTENT_SCHEME
-                    ? tab.input
-                    : undefined;
-            const side: Side | undefined =
-                diff?.original.toString() === uri ? 'left' : diff?.modified.toString() === uri ? 'right' : undefined;
+            // VS Code gives diff panes no viewColumn; plain editors always have one.
+            const left = diffs.some((diff) => diff.original.toString() === uri);
+            const right = editor.viewColumn === undefined && diffs.some((diff) => diff.modified.toString() === uri);
+            const side: Side | undefined = left ? 'left' : right ? 'right' : undefined;
             const stripes = side ? await this.stripes(node, side, editor.document) : NO_STRIPES;
             if (generation !== this.generation) return;
 
